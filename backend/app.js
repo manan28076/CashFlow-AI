@@ -1,0 +1,29 @@
+const dashboardRoutes = require("./src/modules/dashboard/dashboard.routes");
+const transactionRoutes = require("./src/modules/transaction/transaction.routes");
+const accountRoutes = require("./src/modules/account/account.routes");
+const errorMiddleware = require("./src/middlewares/error.middleware");
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const compression = require("compression");
+const authRoutes = require("./src/modules/auth/auth.routes");
+const app = express();
+
+app.use(cors());
+app.use(helmet());
+app.use(compression());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use("/api/auth", authRoutes);
+app.use("/api/accounts", accountRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "CashFlow AI Backend Running 🚀",
+  });
+});
+app.use(errorMiddleware);
+module.exports = app;
