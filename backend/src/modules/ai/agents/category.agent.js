@@ -1,14 +1,11 @@
 const { askGemini } = require("../services/gemini.service");
 const { categoryPrompt } = require("../prompts/category.prompt");
+const { safeParseJSON } = require("../utils/jsonParser");
 
-const categoryAgent = async (transactions) => {
-  const prompt = categoryPrompt(transactions);
-
+const categoryAgent = async (transactions, categoryNames) => {
+  const prompt = categoryPrompt(transactions, categoryNames);
   const response = await askGemini(prompt);
-
-  const { safeParseJSON } = require("../utils/jsonParser");
-
-return safeParseJSON(response);
+  return safeParseJSON(response);
 };
 
 module.exports = {

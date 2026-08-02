@@ -36,14 +36,35 @@ const getSummary = async (userId) => {
     },
   });
 
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const currentMonthExpense = await prisma.transaction.aggregate({
+    where: {
+      accountId: {
+        in: ids,
+      },
+      type: "EXPENSE",
+      date: {
+        gte: monthStart,
+        lt: monthEnd,
+      },
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
   const income = totalIncome._sum.amount || 0;
   const expense = totalExpense._sum.amount || 0;
+  const currentMonthSpending = currentMonthExpense._sum.amount || 0;
 
   return {
     totalBalance: income - expense,
     totalIncome: income,
     totalExpense: expense,
-    savings: income - expense,
+    currentMonthSpending,
   };
 };
 const getCategoryBreakdown = async (userId) => {

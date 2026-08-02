@@ -7,6 +7,9 @@ const createBudgetSchema = z.object({
   year: z.number().min(2024),
 });
 
+const updateBudgetSchema = createBudgetSchema.partial();
+
 module.exports = {
   createBudgetSchema,
+  updateBudgetSchema,
 };

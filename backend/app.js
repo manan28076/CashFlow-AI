@@ -1,3 +1,4 @@
+const categoryRoutes = require("./src/modules/category/category.routes");
 const aiRoutes = require("./src/modules/ai/ai.routes");
 const budgetRoutes = require("./src/modules/budget/budget.routes");
 const dashboardRoutes = require("./src/modules/dashboard/dashboard.routes");
@@ -23,6 +24,7 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/categories", categoryRoutes);
 app.get("/", (req, res) => {
   res.json({
     success: true,

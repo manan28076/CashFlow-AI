@@ -10,6 +10,21 @@ const testAISchema = z.object({
   ),
 });
 
+const uploadStatementSchema = z.object({
+  accountId: z.string().min(1, "accountId is required"),
+});
+
+const askSchema = z.object({
+  question: z.string().min(3, "question is required"),
+});
+
+const chatSchema = z.object({
+  message: z.string().min(3, "message is required"),
+});
+
 module.exports = {
   testAISchema,
+  uploadStatementSchema,
+  askSchema,
+  chatSchema,
 };

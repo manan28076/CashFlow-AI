@@ -1,9 +1,10 @@
-const categoryPrompt = (transactions) => `
+const categoryPrompt = (transactions, categoryNames) => `
 You are a financial AI.
 
-Categorize each transaction.
+Categorize each transaction into exactly one of these categories:
+${JSON.stringify(categoryNames)}
 
-Return ONLY valid JSON.
+Return ONLY valid JSON array, one entry per transaction, in the same order as given, using the "id" field to match.
 
 Transactions:
 
@@ -13,8 +14,8 @@ Expected Output:
 
 [
   {
-    "merchant":"Swiggy",
-    "category":"Food"
+    "id": 0,
+    "category": "Food"
   }
 ]
 `;

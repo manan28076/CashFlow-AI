@@ -3,24 +3,23 @@ const { insightAgent } = require("./agents/insight.agent");
 const { budgetAgent } = require("./agents/budget.agent");
 const { fraudAgent } = require("./agents/fraud.agent");
 const { healthAgent } = require("./agents/health.agent");
+const { getCategoryMap } = require("./utils/categoryMap");
 
 const runAI = async (transactions) => {
+  const { names: categoryNames, nameToId } = await getCategoryMap();
+
+  const indexed = transactions.map((t, i) => ({ id: i, ...t }));
+
   const [categories, insights, budget, fraud, health] =
     await Promise.all([
-      categoryAgent(transactions),
-      insightAgent(transactions),
-      budgetAgent(transactions),
-      fraudAgent(transactions),
-      healthAgent(transactions),
+      categoryAgent(indexed, categoryNames),
+      insightAgent(indexed),
+      budgetAgent(indexed),
+      fraudAgent(indexed),
+      healthAgent(indexed),
     ]);
 
-  return {
-    categories,
-    insights,
-    budget,
-    fraud,
-    health,
-  };
+  return { indexed, categories, insights, budget, fraud, health, nameToId };
 };
 
 module.exports = {

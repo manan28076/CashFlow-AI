@@ -11,6 +11,21 @@ const createTransactionSchema = z.object({
   date: z.string(),
 });
 
+const updateTransactionSchema = createTransactionSchema.partial();
+
+const transactionQuerySchema = z.object({
+  search: z.string().optional(),
+  categoryId: z.string().optional(),
+  accountId: z.string().optional(),
+  type: z.enum(["INCOME", "EXPENSE"]).optional(),
+  sortBy: z.enum(["date", "amount"]).optional().default("date"),
+  sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
+  page: z.coerce.number().int().positive().optional().default(1),
+  limit: z.coerce.number().int().positive().max(100).optional().default(10),
+});
+
 module.exports = {
   createTransactionSchema,
+  updateTransactionSchema,
+  transactionQuerySchema,
 };
