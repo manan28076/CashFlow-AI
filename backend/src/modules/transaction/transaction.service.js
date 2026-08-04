@@ -66,9 +66,31 @@ const createManyFromStatement = async (rows, accountId, userId) => {
     isAnomaly: !!r.isAnomaly,
   }));
 
-  await prisma.transaction.createMany({ data });
+  const existing = await prisma.transaction.findMany({
+    where: { accountId },
+    select: { date: true, amount: true, merchant: true },
+  });
 
-  return getTransactions(userId, {});
+  const existingKeys = new Set(
+    existing.map(
+      (t) => `${t.date.toISOString()}|${t.amount}|${t.merchant || ""}`
+    )
+  );
+
+  const newRows = data.filter((r) => {
+    const key = `${r.date.toISOString()}|${r.amount}|${r.merchant || ""}`;
+    return !existingKeys.has(key);
+  });
+
+  const skippedCount = data.length - newRows.length;
+
+  if (newRows.length > 0) {
+    await prisma.transaction.createMany({ data: newRows });
+  }
+
+  const result = await getTransactions(userId, {});
+
+  return { ...result, skippedDuplicates: skippedCount };
 };
 
 const getTransactions = async (userId, query) => {
