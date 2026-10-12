@@ -39,8 +39,8 @@ const parsePdfStatement = async (buffer) => {
     throw new AppError("Statement exceeds maximum 40 pages limit. Please upload a shorter statement period.", 400);
   }
 
-  // Chunk pages into groups of 3
-  const chunkSize = 3;
+  // Chunk pages into groups of 6 for high speed
+  const chunkSize = 6;
   const chunkRanges = [];
   for (let i = 0; i < totalPages; i += chunkSize) {
     const end = Math.min(i + chunkSize, totalPages);
@@ -108,13 +108,11 @@ Return ONLY valid JSON.
     return Array.isArray(parsed) ? parsed : [];
   };
 
-  // Run with concurrency limit of 3
+  // Run all chunks in parallel for maximum speed
+  const chunkResults = await Promise.all(chunkRanges.map((range) => processChunk(range)));
   const results = [];
-  const concurrency = 3;
-  for (let i = 0; i < chunkRanges.length; i += concurrency) {
-    const batch = chunkRanges.slice(i, i + concurrency);
-    const batchResults = await Promise.all(batch.map((range) => processChunk(range)));
-    for (const chunkResult of batchResults) {
+  for (const chunkResult of chunkResults) {
+    if (Array.isArray(chunkResult)) {
       results.push(...chunkResult);
     }
   }

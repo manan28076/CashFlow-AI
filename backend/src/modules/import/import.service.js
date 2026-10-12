@@ -216,13 +216,19 @@ const parseStatementFile = async ({ buffer, originalname, mimetype }, userId, ta
     }
   }
 
-  // Batch Gemini categorization for unknown merchants (up to 40 per call)
+  // Batch Gemini categorization for unknown merchants (parallel calls for max speed)
   const unknownMerchants = Array.from(unknownMerchantsSet);
   const geminiCategorizedMap = new Map(); // merchant -> categoryName
 
-  for (let i = 0; i < unknownMerchants.length; i += 40) {
-    const chunk = unknownMerchants.slice(i, i + 40);
-    const promptText = `
+  if (unknownMerchants.length > 0) {
+    const merchantChunks = [];
+    for (let i = 0; i < unknownMerchants.length; i += 40) {
+      merchantChunks.push(unknownMerchants.slice(i, i + 40));
+    }
+
+    await Promise.all(
+      merchantChunks.map(async (chunk) => {
+        const promptText = `
 You are a financial AI categorizing Indian transaction descriptions/merchants into EXACTLY one of these allowed categories:
 ${JSON.stringify(categoryNames)}
 
@@ -235,23 +241,25 @@ Return a JSON array of objects with schema:
 ]
 If uncertain, assign "Other". Return strictly valid JSON.
 `;
-    try {
-      const rawAiRes = await askGeminiStructured({
-        contents: [{ role: "user", parts: [{ text: promptText }] }],
-        jsonMode: true,
-        temperature: 0,
-      });
-      const aiArr = safeParseJSON(rawAiRes);
-      if (Array.isArray(aiArr)) {
-        for (const item of aiArr) {
-          if (item && item.merchant && item.category) {
-            geminiCategorizedMap.set(item.merchant, item.category);
+        try {
+          const rawAiRes = await askGeminiStructured({
+            contents: [{ role: "user", parts: [{ text: promptText }] }],
+            jsonMode: true,
+            temperature: 0,
+          });
+          const aiArr = safeParseJSON(rawAiRes);
+          if (Array.isArray(aiArr)) {
+            for (const item of aiArr) {
+              if (item && item.merchant && item.category) {
+                geminiCategorizedMap.set(item.merchant, item.category);
+              }
+            }
           }
+        } catch (e) {
+          // Graceful fallback to Other on any AI failure
         }
-      }
-    } catch (e) {
-      // Graceful fallback to Other on any AI failure
-    }
+      })
+    );
   }
 
   // Apply AI categories to rows that were unassigned
