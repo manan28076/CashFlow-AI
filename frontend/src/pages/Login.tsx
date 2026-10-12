@@ -8,7 +8,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 
 export const Login = () => {
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, loginWithDemo } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -92,14 +92,32 @@ export const Login = () => {
         </span>
       </div>
 
-      <div className="flex justify-center">
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={() => toast.error("Google sign-in was unsuccessful")}
-          shape="rectangular"
-          theme="outline"
-          width="100%"
-        />
+      <div className="flex flex-col gap-3">
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => toast.error("Google sign-in was unsuccessful")}
+            shape="rectangular"
+            theme="outline"
+            width="100%"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await loginWithDemo();
+              toast.success("Loaded demo account with realistic Indian transactions!");
+              navigate("/dashboard");
+            } catch (e) {
+              toast.error("Failed to load demo data");
+            }
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-stone-200 bg-stone-50 py-2.5 text-xs font-semibold text-stone-700 shadow-xs transition-colors hover:bg-stone-100"
+        >
+          <span>✨ Try with sample data (Demo Mode)</span>
+        </button>
       </div>
 
       <p className="mt-4 text-center text-sm text-stone-500">

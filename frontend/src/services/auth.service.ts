@@ -32,6 +32,11 @@ export const authService = {
     return res.data.data;
   },
 
+  demoLogin: async () => {
+    const res = await api.post<ApiResponse<AuthResponse>>("/auth/demo");
+    return res.data.data;
+  },
+
   me: async () => {
     const res = await api.get<ApiResponse<User>>("/auth/me");
     return res.data.data;

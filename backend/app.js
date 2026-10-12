@@ -10,6 +10,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const compression = require("compression");
 const authRoutes = require("./src/modules/auth/auth.routes");
+const importRoutes = require("./src/modules/import/import.routes");
 const app = express();
 
 app.use(cors());
@@ -25,6 +26,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/import", importRoutes);
 app.get("/", (req, res) => {
   res.json({
     success: true,

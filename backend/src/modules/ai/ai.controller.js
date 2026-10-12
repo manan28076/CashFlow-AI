@@ -79,9 +79,38 @@ const chat = asyncHandler(async (req, res) => {
   );
 });
 
+const { parseQuickAddPrompt } = require("./agents/quickadd.agent");
+const prisma = require("../../lib/prisma");
+
+const parseQuickAdd = asyncHandler(async (req, res) => {
+  const { text } = req.body;
+  if (!text || typeof text !== "string" || !text.trim()) {
+    return res.status(400).json(new ApiResponse(400, "Text input is required"));
+  }
+
+  const categories = await prisma.category.findMany({ select: { id: true, name: true } });
+  const categoryNames = categories.map((c) => c.name);
+
+  const parsed = await parseQuickAddPrompt(text.trim(), categoryNames);
+  if (!parsed || !parsed.amount) {
+    return res.status(400).json(new ApiResponse(400, "Could not understand the transaction details. Try typing e.g. 'zomato 350'"));
+  }
+
+  const catObj = categories.find((c) => c.name.toLowerCase() === (parsed.category || "").toLowerCase()) || categories[0];
+
+  return res.status(200).json(
+    new ApiResponse(200, "Transaction parsed successfully", {
+      ...parsed,
+      categoryId: catObj ? catObj.id : null,
+      categoryName: catObj ? catObj.name : "Other",
+    })
+  );
+});
+
 module.exports = {
   test,
   uploadStatement,
   ask,
   chat,
+  parseQuickAdd,
 };

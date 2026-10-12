@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   ArrowLeftRight,
+  UploadCloud,
   Wallet,
   Tag,
   PiggyBank,
@@ -15,6 +16,7 @@ import { cn } from "../../utils/cn";
 const links = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { to: "/import", label: "Import Statement", icon: UploadCloud },
   { to: "/accounts", label: "Accounts", icon: Wallet },
   { to: "/categories", label: "Categories", icon: Tag },
   { to: "/budget", label: "Budget", icon: PiggyBank },

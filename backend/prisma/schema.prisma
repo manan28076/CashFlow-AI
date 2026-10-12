@@ -54,6 +54,7 @@ model Transaction {
   amount      Float
   type        TransactionType
   isAnomaly   Boolean           @default(false)
+  hash        String?
   createdAt   DateTime          @default(now())
 
   accountId   String
@@ -61,6 +62,8 @@ model Transaction {
 
   categoryId  String
   category    Category          @relation(fields: [categoryId], references: [id])
+
+  @@index([accountId, hash])
 }
 
 model Budget {

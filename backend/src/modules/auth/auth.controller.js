@@ -57,9 +57,22 @@ const getMe = asyncHandler(async (req, res) => {
   );
 });
 
+const demoLogin = asyncHandler(async (req, res) => {
+  const { loginDemoUser } = require("./auth.service");
+  const { user, token } = await loginDemoUser();
+
+  return res.status(200).json(
+    new ApiResponse(200, "Demo login successful", {
+      user,
+      token,
+    })
+  );
+});
+
 module.exports = {
   register,
   login,
   googleLogin,
+  demoLogin,
   getMe,
 };

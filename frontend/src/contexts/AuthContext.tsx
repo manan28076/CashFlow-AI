@@ -9,6 +9,7 @@ interface AuthContextValue {
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   loginWithGoogle: (token: string) => Promise<void>;
+  loginWithDemo: () => Promise<void>;
   logout: () => void;
 }
 
@@ -54,6 +55,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(data.user);
   };
 
+  const loginWithDemo = async () => {
+    const data = await authService.demoLogin();
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    setUser(data.user);
+  };
+
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -69,6 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         register,
         loginWithGoogle,
+        loginWithDemo,
         logout,
       }}
     >

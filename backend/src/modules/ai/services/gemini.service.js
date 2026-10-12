@@ -19,6 +19,32 @@ const askGemini = async (prompt) => {
   }
 };
 
+/**
+ * Call Gemini with structured content (inline data like PDF parts, text instructions)
+ * and optional temperature & JSON response format.
+ */
+const askGeminiStructured = async ({ contents, jsonMode = true, temperature = 0 }) => {
+  try {
+    const config = {
+      temperature,
+    };
+    if (jsonMode) {
+      config.responseMimeType = "application/json";
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-flash-latest",
+      contents,
+      config,
+    });
+
+    return response.text;
+  } catch (error) {
+    handleAIError(error);
+  }
+};
+
 module.exports = {
   askGemini,
+  askGeminiStructured,
 };

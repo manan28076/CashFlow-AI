@@ -15,6 +15,7 @@ import { Budget } from "./pages/Budget";
 import { AIAssistant } from "./pages/AIAssistant";
 import { AIReport } from "./pages/AIReport";
 import { Settings } from "./pages/Settings";
+import { Import } from "./pages/Import";
 import { NotFound } from "./pages/NotFound";
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
           >
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/transactions" element={<Transactions />} />
+            <Route path="/import" element={<Import />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/budget" element={<Budget />} />
