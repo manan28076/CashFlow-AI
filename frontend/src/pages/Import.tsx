@@ -9,9 +9,13 @@ import {
   ShieldCheck,
   HelpCircle,
   RefreshCw,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
+import { Modal } from "../components/ui/Modal";
+import { Input } from "../components/ui/Input";
 import {
   importService,
   type ParsedTransactionRow,
@@ -27,6 +31,22 @@ export const Import = () => {
   const [uploadData, setUploadData] = useState<StatementUploadResponse | null>(null);
   const [transactions, setTransactions] = useState<ParsedTransactionRow[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
+
+  // Edit Modal State
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<{
+    date: string;
+    description: string;
+    amount: number;
+    type: "INCOME" | "EXPENSE";
+    categoryId: string;
+  }>({
+    date: "",
+    description: "",
+    amount: 0,
+    type: "EXPENSE",
+    categoryId: "",
+  });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -84,13 +104,53 @@ export const Import = () => {
     setTransactions(next);
   };
 
+  // Delete a transaction from preview
+  const handleDeleteRow = (index: number) => {
+    const next = transactions.filter((_, i) => i !== index);
+    setTransactions(next);
+    toast.success("Transaction removed from preview");
+  };
+
+  // Open edit modal
+  const handleOpenEdit = (index: number) => {
+    const tx = transactions[index];
+    setEditingIndex(index);
+    setEditForm({
+      date: tx.date,
+      description: tx.description,
+      amount: tx.amount,
+      type: tx.type,
+      categoryId: tx.categoryId,
+    });
+  };
+
+  // Save edit modal
+  const handleSaveEdit = () => {
+    if (editingIndex === null) return;
+    const next = [...transactions];
+    const cat = uploadData?.categories.find((c) => c.id === editForm.categoryId);
+    next[editingIndex] = {
+      ...next[editingIndex],
+      date: editForm.date,
+      description: editForm.description,
+      merchant: editForm.description,
+      amount: Number(editForm.amount),
+      type: editForm.type,
+      categoryId: editForm.categoryId,
+      categoryName: cat ? cat.name : next[editingIndex].categoryName,
+    };
+    setTransactions(next);
+    setEditingIndex(null);
+    toast.success("Transaction updated!");
+  };
+
   const handleConfirmImport = async () => {
     if (!uploadData || !selectedAccountId) return;
 
     // Filter to only non-duplicates
     const rowsToImport = transactions.filter((r) => !r.duplicate);
     if (rowsToImport.length === 0) {
-      toast.error("No new transactions to import. All rows are duplicates.");
+      toast.error("No new transactions to import.");
       return;
     }
 
@@ -232,7 +292,7 @@ export const Import = () => {
           <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm md:flex-row md:items-center">
             <div className="flex flex-wrap items-center gap-3">
               <span className="inline-flex items-center rounded-md bg-stone-900 px-2.5 py-1 text-xs font-semibold text-white">
-                {uploadData.summary.total} Extracted
+                {transactions.length} Total
               </span>
               <span className="text-sm text-stone-600">
                 <strong className="text-emerald-700">{newTransactionsCount} new</strong> ·{" "}
@@ -283,6 +343,7 @@ export const Import = () => {
                     <th className="px-4 py-3">Category</th>
                     <th className="px-4 py-3 text-right">Amount</th>
                     <th className="px-4 py-3 text-center">Status</th>
+                    <th className="px-4 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
@@ -351,6 +412,27 @@ export const Import = () => {
                             </span>
                           )}
                         </td>
+                        {/* Actions: Edit & Remove right next to each other */}
+                        <td className="whitespace-nowrap px-4 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(idx)}
+                              className="rounded-md p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+                              title="Edit transaction details"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteRow(idx)}
+                              className="rounded-md p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                              title="Remove transaction from import"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
@@ -360,7 +442,88 @@ export const Import = () => {
           </Card>
         </div>
       )}
+
+      {/* Edit Transaction Modal */}
+      <Modal
+        isOpen={editingIndex !== null}
+        onClose={() => setEditingIndex(null)}
+        title="Edit Transaction Details"
+      >
+        <div className="flex flex-col gap-4">
+          <Input
+            id="edit-date"
+            label="Date (YYYY-MM-DD)"
+            type="date"
+            value={editForm.date}
+            onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+          />
+          <Input
+            id="edit-description"
+            label="Description / Merchant"
+            value={editForm.description}
+            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+          />
+          <Input
+            id="edit-amount"
+            label="Amount (₹)"
+            type="number"
+            step="0.01"
+            value={editForm.amount}
+            onChange={(e) => setEditForm({ ...editForm, amount: parseFloat(e.target.value) || 0 })}
+          />
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-stone-600">Type</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setEditForm({ ...editForm, type: "EXPENSE" })}
+                className={`rounded-lg py-2 text-xs font-semibold transition-colors ${
+                  editForm.type === "EXPENSE"
+                    ? "bg-red-600 text-white"
+                    : "border border-stone-200 bg-stone-50 text-stone-700 hover:bg-stone-100"
+                }`}
+              >
+                Expense (-)
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditForm({ ...editForm, type: "INCOME" })}
+                className={`rounded-lg py-2 text-xs font-semibold transition-colors ${
+                  editForm.type === "INCOME"
+                    ? "bg-emerald-600 text-white"
+                    : "border border-stone-200 bg-stone-50 text-stone-700 hover:bg-stone-100"
+                }`}
+              >
+                Income (+)
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-stone-600">Category</label>
+            <select
+              value={editForm.categoryId}
+              onChange={(e) => setEditForm({ ...editForm, categoryId: e.target.value })}
+              className="w-full rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-sm text-stone-900 outline-none focus:border-orange-500"
+            >
+              {uploadData?.categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mt-2 flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setEditingIndex(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
+
 
