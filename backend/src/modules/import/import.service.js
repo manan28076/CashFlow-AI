@@ -11,46 +11,52 @@ const MERCHANT_RULES = [
   // Food & Dining / Groceries
   { pattern: /\b(swiggy|instamart)\b/i, merchant: "Swiggy", category: "Food" },
   { pattern: /\b(zomato|blinkit)\b/i, merchant: "Zomato", category: "Food" },
-  { pattern: /\b(zepto)\b/i, merchant: "Zepto", category: "Groceries" },
-  { pattern: /\b(bb daily|bigbasket)\b/i, merchant: "BigBasket", category: "Groceries" },
-  { pattern: /\b(mcdonalds|starbucks|dominos|pizza hut|kfc|burger king|chaayos|chai point)\b/i, merchant: "Food & Dining", category: "Food" },
+  { pattern: /\b(zepto)\b/i, merchant: "Zepto", category: "Food" },
+  { pattern: /\b(bb daily|bigbasket)\b/i, merchant: "BigBasket", category: "Food" },
+  { pattern: /\b(mcdonalds|starbucks|dominos|pizza hut|kfc|burger king|chaayos|chai point|tea|coffee|cafe|dhaba|baker|bakery|restaurant)\b/i, merchant: "Food & Dining", category: "Food" },
 
   // Transport & Travel
-  { pattern: /\b(uber)\b/i, merchant: "Uber", category: "Transportation" },
-  { pattern: /\b(ola)\b/i, merchant: "Ola", category: "Transportation" },
-  { pattern: /\b(rapido)\b/i, merchant: "Rapido", category: "Transportation" },
-  { pattern: /\b(irctc|indian railways)\b/i, merchant: "IRCTC", category: "Travel" },
-  { pattern: /\b(makemytrip|goibibo|ixigo|easemytrip|yatra|indigo|air india)\b/i, merchant: "Flight/Travel", category: "Travel" },
+  { pattern: /\b(uber)\b/i, merchant: "Uber", category: "Travel" },
+  { pattern: /\b(ola)\b/i, merchant: "Ola", category: "Travel" },
+  { pattern: /\b(rapido)\b/i, merchant: "Rapido", category: "Travel" },
+  { pattern: /\b(irctc|indian railways|railway)\b/i, merchant: "IRCTC", category: "Travel" },
+  { pattern: /\b(makemytrip|goibibo|ixigo|easemytrip|yatra|indigo|air india|akasa|spicejet)\b/i, merchant: "Flight/Travel", category: "Travel" },
+  { pattern: /\b(fuel|petrol|diesel|cng|hpcl|bpcl|iocl|indian oil|shell)\b/i, merchant: "Fuel / Petrol", category: "Travel" },
+
+  // Housing & Rent (mapped to Bills if Rent doesn't exist)
+  { pattern: /(?:^|[\s/_-])(rent|houserent|house\s*rent|pg\s*rent|flat\s*rent|maintenance|society|maintenance\s*charge|landlord)(?:$|[\s/_-])/i, merchant: "House Rent / Maintenance", category: "Bills" },
+  { pattern: /\b(nobroker|magicbricks|nestaway|housing\.com)\b/i, merchant: "House Rent", category: "Bills" },
 
   // Shopping & Ecommerce
   { pattern: /\b(amazon|amzn)\b/i, merchant: "Amazon", category: "Shopping" },
   { pattern: /\b(flipkart)\b/i, merchant: "Flipkart", category: "Shopping" },
   { pattern: /\b(myntra)\b/i, merchant: "Myntra", category: "Shopping" },
-  { pattern: /\b(ajio|nykaa|tata cliq|meesho)\b/i, merchant: "Shopping", category: "Shopping" },
+  { pattern: /\b(ajio|nykaa|tata cliq|meesho|zara|h&m|decathlon)\b/i, merchant: "Shopping", category: "Shopping" },
 
   // Entertainment & Subscriptions
   { pattern: /\b(netflix)\b/i, merchant: "Netflix", category: "Entertainment" },
   { pattern: /\b(spotify)\b/i, merchant: "Spotify", category: "Entertainment" },
-  { pattern: /\b(hotstar|disney|prime video|youtube|apple\.com|apple bill)\b/i, merchant: "Digital Subscription", category: "Entertainment" },
+  { pattern: /\b(hotstar|disney|prime video|youtube|apple\.com|apple bill|pvr|inox|bookmyshow)\b/i, merchant: "Digital Subscription", category: "Entertainment" },
 
-  // Utilities & Telecom
-  { pattern: /\b(airtel)\b/i, merchant: "Airtel", category: "Utilities" },
-  { pattern: /\b(jio|reliance jio)\b/i, merchant: "Jio", category: "Utilities" },
-  { pattern: /\b(vodafone|vi prepaid|vi postpaid)\b/i, merchant: "Vi Telecom", category: "Utilities" },
-  { pattern: /\b(bescom|cesc|tata power|mahadiscom|electricity|torrent power|adani electricity)\b/i, merchant: "Electricity Bill", category: "Utilities" },
-  { pattern: /\b(igl|mgl|indane|bharat gas|hp gas)\b/i, merchant: "Gas Utility", category: "Utilities" },
+  // Utilities & Telecom & Household Bills
+  { pattern: /\b(airtel)\b/i, merchant: "Airtel", category: "Bills" },
+  { pattern: /\b(jio|reliance jio)\b/i, merchant: "Jio", category: "Bills" },
+  { pattern: /\b(vodafone|vi prepaid|vi postpaid)\b/i, merchant: "Vi Telecom", category: "Bills" },
+  { pattern: /\b(bescom|cesc|tata power|mahadiscom|electricity|torrent power|adani electricity|power)\b/i, merchant: "Electricity Bill", category: "Bills" },
+  { pattern: /\b(igl|mgl|indane|bharat gas|hp gas|gas)\b/i, merchant: "Gas Utility", category: "Bills" },
+  { pattern: /\b(water|recharge|dth|broadband|wifi)\b/i, merchant: "Utility Bill", category: "Bills" },
 
   // Investments & Financial Services
   { pattern: /\b(zerodha|kite)\b/i, merchant: "Zerodha", category: "Investment" },
   { pattern: /\b(groww)\b/i, merchant: "Groww", category: "Investment" },
-  { pattern: /\b(angel one|upstox|indmoney|kuvera)\b/i, merchant: "Brokerage", category: "Investment" },
+  { pattern: /\b(angel one|upstox|indmoney|kuvera|mutual fund|sip|mf)\b/i, merchant: "Investment / Stocks", category: "Investment" },
 
   // Healthcare
-  { pattern: /\b(apollo pharmacy|1mg|tata 1mg|pharmeasy|netmeds|medplus)\b/i, merchant: "Pharmacy/Medical", category: "Healthcare" },
+  { pattern: /\b(apollo pharmacy|1mg|tata 1mg|pharmeasy|netmeds|medplus|clinic|hospital|doctor|dentist|pharmacy|medical)\b/i, merchant: "Healthcare / Medical", category: "Healthcare" },
 
-  // Housing
-  { pattern: /\b(rent|nobroker|magicbricks)\b/i, merchant: "House Rent", category: "Housing" },
-  { pattern: /\b(salary|payroll|wages)\b/i, merchant: "Employer", category: "Salary" },
+  // Salary & Income
+  { pattern: /\b(salary|payroll|wages|stipend)\b/i, merchant: "Employer Salary", category: "Salary" },
+  { pattern: /\b(interest|dividend|cashback|refund)\b/i, merchant: "Interest / Refund", category: "Other" },
 ];
 
 /**
@@ -192,13 +198,14 @@ const parseStatementFile = async ({ buffer, originalname, mimetype }, userId, ta
     throw new AppError("Zero valid financial transactions could be parsed from this file.", 400);
   }
 
-  // 4. Categorize rows: Regex rules first, then batch remaining unknown merchants to Gemini
+  // 4. Categorize rows: Regex rules first, then batch remaining unknown items to Gemini
   const categoryNames = categories.map((c) => c.name);
-  const unknownMerchantsSet = new Set();
+  const unassignedRows = [];
 
-  for (const row of normalizedRows) {
+  for (let i = 0; i < normalizedRows.length; i++) {
+    const row = normalizedRows[i];
     let matchedCatName = null;
-    const textToMatch = `${row.rawDescription} ${row.merchant}`.toLowerCase();
+    const textToMatch = `${row.rawDescription} ${row.merchant} ${row.description}`.toLowerCase();
 
     for (const rule of MERCHANT_RULES) {
       if (rule.pattern.test(textToMatch)) {
@@ -212,34 +219,54 @@ const parseStatementFile = async ({ buffer, originalname, mimetype }, userId, ta
       row.categoryId = found ? found.id : otherCategory.id;
       row.categoryName = found ? found.name : otherCategory.name;
     } else {
-      unknownMerchantsSet.add(row.merchant);
+      unassignedRows.push({
+        rowIndex: i,
+        merchant: row.merchant,
+        narration: row.rawDescription || row.description,
+        type: row.type,
+        amount: row.amount,
+      });
     }
   }
 
-  // Batch Gemini categorization for unknown merchants (parallel calls for max speed)
-  const unknownMerchants = Array.from(unknownMerchantsSet);
-  const geminiCategorizedMap = new Map(); // merchant -> categoryName
-
-  if (unknownMerchants.length > 0) {
-    const merchantChunks = [];
-    for (let i = 0; i < unknownMerchants.length; i += 40) {
-      merchantChunks.push(unknownMerchants.slice(i, i + 40));
+  // Batch Gemini categorization for unassigned items with full context (narration, type, amount)
+  if (unassignedRows.length > 0) {
+    const chunks = [];
+    for (let i = 0; i < unassignedRows.length; i += 40) {
+      chunks.push(unassignedRows.slice(i, i + 40));
     }
 
     await Promise.all(
-      merchantChunks.map(async (chunk) => {
+      chunks.map(async (chunk) => {
+        const promptItems = chunk.map((item) => ({
+          id: item.rowIndex,
+          merchant: item.merchant,
+          narration: item.narration,
+          type: item.type,
+          amount: item.amount,
+        }));
+
         const promptText = `
-You are a financial AI categorizing Indian transaction descriptions/merchants into EXACTLY one of these allowed categories:
+You are a financial AI categorizing Indian bank transactions into EXACTLY one of these allowed categories:
 ${JSON.stringify(categoryNames)}
 
-Given this list of unique transaction merchants:
-${JSON.stringify(chunk)}
+Given this list of transactions (includes bank narration, remarks, amount, and type EXPENSE or INCOME):
+${JSON.stringify(promptItems)}
+
+Guidelines:
+- If narration contains keywords like "rent", "maintenance", "society", "electricity", "broadband", "mobile" -> "Bills"
+- If it's a grocery or food order -> "Food"
+- If it's train/flight/cab/fuel -> "Travel"
+- If it's salary or client payout -> "Salary"
+- If money transfer or personal send -> "Transfer"
+- If investment or SIP -> "Investment"
+- Default to "Other" if completely ambiguous.
 
 Return a JSON array of objects with schema:
 [
-  { "merchant": "Merchant name exactly as given", "category": "One of allowed categories" }
+  { "id": 0, "category": "One of allowed categories" }
 ]
-If uncertain, assign "Other". Return strictly valid JSON.
+Return strictly valid JSON.
 `;
         try {
           const rawAiRes = await askGeminiStructured({
@@ -250,8 +277,15 @@ If uncertain, assign "Other". Return strictly valid JSON.
           const aiArr = safeParseJSON(rawAiRes);
           if (Array.isArray(aiArr)) {
             for (const item of aiArr) {
-              if (item && item.merchant && item.category) {
-                geminiCategorizedMap.set(item.merchant, item.category);
+              if (item && typeof item.id === "number" && item.category) {
+                const targetRow = normalizedRows[item.id];
+                if (targetRow && !targetRow.categoryId) {
+                  const found = categoryMap.get(item.category.toLowerCase());
+                  if (found) {
+                    targetRow.categoryId = found.id;
+                    targetRow.categoryName = found.name;
+                  }
+                }
               }
             }
           }
@@ -262,18 +296,11 @@ If uncertain, assign "Other". Return strictly valid JSON.
     );
   }
 
-  // Apply AI categories to rows that were unassigned
+  // Final fallback: Ensure every row has a category
   for (const row of normalizedRows) {
     if (!row.categoryId) {
-      const suggestedName = geminiCategorizedMap.get(row.merchant);
-      const found = suggestedName ? categoryMap.get(suggestedName.toLowerCase()) : null;
-      if (found) {
-        row.categoryId = found.id;
-        row.categoryName = found.name;
-      } else {
-        row.categoryId = otherCategory.id;
-        row.categoryName = otherCategory.name;
-      }
+      row.categoryId = otherCategory.id;
+      row.categoryName = otherCategory.name;
     }
   }
 
