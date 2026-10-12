@@ -1,10 +1,10 @@
 const crypto = require("crypto");
-const prisma = require("../../../lib/prisma");
-const AppError = require("../../../errors/AppError");
+const prisma = require("../../lib/prisma");
+const AppError = require("../../errors/AppError");
 const { parsePdfStatement } = require("./parsers/pdf.parser");
 const { parseGridStatement } = require("./parsers/excel.parser");
-const { askGeminiStructured } = require("../../ai/services/gemini.service");
-const { safeParseJSON } = require("../../ai/utils/jsonParser");
+const { askGeminiStructured } = require("../ai/services/gemini.service");
+const { safeParseJSON } = require("../ai/utils/jsonParser");
 
 // Known Indian merchant rule map
 const MERCHANT_RULES = [
