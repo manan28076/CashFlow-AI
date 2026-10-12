@@ -61,20 +61,114 @@ const attachProgress = async (budget) => {
 };
 
 const getBudgets = async (userId, month, year) => {
-  const budgets = await prisma.budget.findMany({
-    where: {
-      userId,
-      ...(month && { month: Number(month) }),
-      ...(year && { year: Number(year) }),
-    },
+  const explicitBudgets = await prisma.budget.findMany({
+    where: { userId },
     include: { category: true },
     orderBy: [{ year: "desc" }, { month: "desc" }],
   });
 
-  return Promise.all(budgets.map(attachProgress));
+  if (explicitBudgets.length === 0) {
+    return [];
+  }
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  // Group configured categories and their budgets
+  const catMap = new Map();
+  for (const b of explicitBudgets) {
+    if (!catMap.has(b.categoryId)) {
+      catMap.set(b.categoryId, {
+        latestAmount: b.amount,
+        category: b.category,
+        months: new Map(),
+      });
+    }
+    catMap.get(b.categoryId).months.set(`${b.year}-${b.month}`, b);
+  }
+
+  const allBudgets = [];
+
+  for (const [catId, { latestAmount, category, months }] of catMap.entries()) {
+    // Find all months with expense transactions for this category
+    const txs = await prisma.transaction.findMany({
+      where: {
+        categoryId: catId,
+        type: "EXPENSE",
+        account: { userId },
+      },
+      select: { date: true },
+    });
+
+    const monthKeys = new Set([
+      ...months.keys(),
+      `${currentYear}-${currentMonth}`,
+    ]);
+
+    for (const t of txs) {
+      const tY = t.date.getFullYear();
+      const tM = t.date.getMonth() + 1;
+      monthKeys.add(`${tY}-${tM}`);
+    }
+
+    for (const key of monthKeys) {
+      const [kYear, kMonth] = key.split("-").map(Number);
+
+      if (month && Number(month) !== kMonth) continue;
+      if (year && Number(year) !== kYear) continue;
+
+      if (months.has(key)) {
+        allBudgets.push(months.get(key));
+      } else {
+        // Carry forward the latest limit configured for this category
+        allBudgets.push({
+          id: `rec_${catId}_${kYear}_${kMonth}`,
+          amount: latestAmount,
+          month: kMonth,
+          year: kYear,
+          userId,
+          categoryId: catId,
+          category,
+          isRecurring: true,
+        });
+      }
+    }
+  }
+
+  const withProgress = await Promise.all(allBudgets.map(attachProgress));
+
+  return withProgress.sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year;
+    return b.month - a.month;
+  });
 };
 
 const updateBudget = async (id, data, userId) => {
+  if (id.startsWith("rec_")) {
+    const { categoryId, amount, month, year } = data;
+    const upserted = await prisma.budget.upsert({
+      where: {
+        userId_categoryId_month_year: {
+          userId,
+          categoryId,
+          month: Number(month),
+          year: Number(year),
+        },
+      },
+      update: { amount },
+      create: {
+        userId,
+        categoryId,
+        amount,
+        month: Number(month),
+        year: Number(year),
+      },
+      include: { category: true },
+    });
+    return attachProgress(upserted);
+  }
+
   const budget = await prisma.budget.findFirst({
     where: { id, userId },
   });
@@ -93,6 +187,10 @@ const updateBudget = async (id, data, userId) => {
 };
 
 const deleteBudget = async (id, userId) => {
+  if (id.startsWith("rec_")) {
+    return;
+  }
+
   const budget = await prisma.budget.findFirst({
     where: { id, userId },
   });

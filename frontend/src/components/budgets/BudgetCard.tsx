@@ -40,7 +40,7 @@ export const BudgetCard = ({
   const currentYear = now.getFullYear();
 
   // Determine initial selected budget
-  const initialBudget =
+  const targetBudget =
     (globalMonthFilter &&
       globalYearFilter &&
       sortedBudgets.find(
@@ -51,7 +51,28 @@ export const BudgetCard = ({
     ) ||
     sortedBudgets[0];
 
-  const [selectedId, setSelectedId] = useState<string>(initialBudget?.id ?? "");
+  const [selectedId, setSelectedId] = useState<string>(targetBudget?.id ?? "");
+
+  // Keep selectedId in sync when user clicks a top Focus Month pill or data reloads
+  useEffect(() => {
+    if (globalMonthFilter && globalYearFilter) {
+      const match = sortedBudgets.find(
+        (b) => b.month === globalMonthFilter && b.year === globalYearFilter
+      );
+      if (match) {
+        setSelectedId(match.id);
+        return;
+      }
+    }
+    const currentMatch = sortedBudgets.find(
+      (b) => b.month === currentMonth && b.year === currentYear
+    );
+    if (currentMatch) {
+      setSelectedId(currentMatch.id);
+    } else if (sortedBudgets[0]) {
+      setSelectedId(sortedBudgets[0].id);
+    }
+  }, [globalMonthFilter, globalYearFilter, budgets]);
 
   const activeBudget =
     sortedBudgets.find((b) => b.id === selectedId) || sortedBudgets[0];
