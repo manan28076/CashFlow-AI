@@ -19,14 +19,20 @@ const createBudget = async (data, userId) => {
   });
 
   if (existingBudget) {
-    throw new AppError("Budget already exists for this month", 409);
+    const updated = await prisma.budget.update({
+      where: { id: existingBudget.id },
+      data: { amount },
+      include: { category: true },
+    });
+    return attachProgress(updated);
   }
 
   const budget = await prisma.budget.create({
     data: { userId, categoryId, amount, month, year },
+    include: { category: true },
   });
 
-  return budget;
+  return attachProgress(budget);
 };
 
 const attachProgress = async (budget) => {

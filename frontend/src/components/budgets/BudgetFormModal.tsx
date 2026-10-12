@@ -10,19 +10,13 @@ import { monthName } from "../../utils/formatters";
 interface BudgetFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (payload: CreateBudgetPayload) => Promise<void>;
+  onSubmit: (payload: CreateBudgetPayload, repeatMonths?: number) => Promise<void>;
   categories: Category[];
   initialData?: Budget | null;
+  defaultCategoryId?: string;
 }
 
 const now = new Date();
-
-const emptyForm: CreateBudgetPayload = {
-  categoryId: "",
-  amount: 0,
-  month: now.getMonth() + 1,
-  year: now.getFullYear(),
-};
 
 export const BudgetFormModal = ({
   isOpen,
@@ -30,30 +24,44 @@ export const BudgetFormModal = ({
   onSubmit,
   categories,
   initialData,
+  defaultCategoryId,
 }: BudgetFormModalProps) => {
-  const [form, setForm] = useState<CreateBudgetPayload>(emptyForm);
+  const [form, setForm] = useState<CreateBudgetPayload>({
+    categoryId: defaultCategoryId || "",
+    amount: 0,
+    month: now.getMonth() + 1,
+    year: now.getFullYear(),
+  });
+  const [repeatMonths, setRepeatMonths] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setForm(
-        initialData
-          ? {
-              categoryId: initialData.categoryId,
-              amount: initialData.amount,
-              month: initialData.month,
-              year: initialData.year,
-            }
-          : emptyForm
-      );
+      if (initialData) {
+        setForm({
+          categoryId: initialData.categoryId,
+          amount: initialData.amount,
+          month: initialData.month,
+          year: initialData.year,
+        });
+        setRepeatMonths(1);
+      } else {
+        setForm({
+          categoryId: defaultCategoryId || (categories[0]?.id ?? ""),
+          amount: 0,
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+        });
+        setRepeatMonths(1);
+      }
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, defaultCategoryId, categories]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await onSubmit(form);
+      await onSubmit(form, repeatMonths);
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -81,15 +89,18 @@ export const BudgetFormModal = ({
             </option>
           ))}
         </Select>
+
         <Input
           id="amount"
-          label="Monthly Limit"
+          label="Monthly Limit (₹)"
           type="number"
-          step="0.01"
-          value={form.amount}
+          step="1"
+          placeholder="e.g. 10000"
+          value={form.amount || ""}
           onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
           required
         />
+
         <div className="grid grid-cols-2 gap-3">
           <Select
             id="month"
@@ -111,8 +122,30 @@ export const BudgetFormModal = ({
             onChange={(e) => setForm({ ...form, year: Number(e.target.value) })}
           />
         </div>
+
+        {!initialData && (
+          <div className="rounded-lg border border-stone-200 bg-stone-50 p-3">
+            <label className="text-xs font-semibold text-stone-700 block mb-1">
+              Apply to Multiple Months
+            </label>
+            <Select
+              id="repeatMonths"
+              value={repeatMonths}
+              onChange={(e) => setRepeatMonths(Number(e.target.value))}
+            >
+              <option value={1}>This month only</option>
+              <option value={3}>Next 3 months</option>
+              <option value={6}>Next 6 months (Half Year)</option>
+              <option value={12}>Full Year (12 months)</option>
+            </Select>
+            <p className="mt-1 text-[11px] text-stone-500">
+              Saves time by creating budget limits across upcoming months automatically.
+            </p>
+          </div>
+        )}
+
         <Button type="submit" isLoading={isSubmitting} className="mt-2 w-full">
-          {initialData ? "Save Changes" : "Add Budget"}
+          {initialData ? "Save Changes" : repeatMonths > 1 ? `Create for ${repeatMonths} Months` : "Add Budget"}
         </Button>
       </form>
     </Modal>
