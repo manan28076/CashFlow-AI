@@ -11,9 +11,11 @@ datasource db {
 model User {
   id        String    @id @default(cuid())
   email     String    @unique
-  password  String
+  password  String?
+  googleId  String?   @unique
+  name      String?
+  avatarUrl String?
   createdAt DateTime  @default(now())
-
   accounts  Account[]
   budgets   Budget[]
 }

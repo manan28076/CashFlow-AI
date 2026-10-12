@@ -4,11 +4,13 @@ const ApiResponse = require("../../utils/apiResponse");
 const {
   registerSchema,
   loginSchema,
+  googleAuthSchema,
 } = require("./auth.validator");
 
 const {
   registerUser,
   loginUser,
+  authenticateWithGoogle,
 } = require("./auth.service");
 
 const register = asyncHandler(async (req, res) => {
@@ -36,13 +38,28 @@ const login = asyncHandler(async (req, res) => {
     })
   );
 });
+const googleLogin = asyncHandler(async (req, res) => {
+  const validatedData = googleAuthSchema.parse(req.body);
+
+  const { user, token } = await authenticateWithGoogle(validatedData.token);
+
+  return res.status(200).json(
+    new ApiResponse(200, "Google authentication successful", {
+      user,
+      token,
+    })
+  );
+});
+
 const getMe = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new ApiResponse(200, "User fetched successfully", req.user)
   );
 });
+
 module.exports = {
   register,
   login,
+  googleLogin,
   getMe,
 };

@@ -9,8 +9,12 @@ const registerSchema = z.object({
     .string()
     .min(6, "Password must be at least 6 characters"),
 });
+const googleAuthSchema = z.object({
+  token: z.string().min(1, "Google ID token is required"),
+});
 
 module.exports = {
   registerSchema,
   loginSchema,
+  googleAuthSchema,
 };
