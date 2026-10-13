@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type FormEvent } from "react";
-import { Send, Bot, User, Sparkles, Database, Trash2, Loader2, ArrowRight } from "lucide-react";
+import { Send, Bot, User, Sparkles, Database, Trash2, Loader2, ArrowRight, RefreshCw } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { aiService } from "../../services/ai.service";
@@ -10,6 +10,8 @@ interface ChatMessage {
   content: string;
   sql?: string;
   isDataQuery?: boolean;
+  isError?: boolean;
+  failedQuestion?: string;
 }
 
 const QUICK_PROMPTS = [
@@ -52,12 +54,24 @@ export const ChatBox = () => {
         },
       ]);
     } catch (err) {
+      let friendlyError = "Something went wrong. Please try again.";
+      if (err instanceof Error) {
+        const raw = err.message;
+        if (raw.includes("503") || raw.includes("high demand") || raw.includes("UNAVAILABLE")) {
+          friendlyError = "Google AI is temporarily experiencing high traffic. Please tap Retry below to ask again.";
+        } else if (raw.includes("429") || raw.includes("quota") || raw.includes("RESOURCE_EXHAUSTED")) {
+          friendlyError = "AI rate limit reached. Please wait a moment and tap Retry.";
+        } else {
+          friendlyError = raw;
+        }
+      }
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            err instanceof Error ? err.message : "Something went wrong. Please try again.",
+          content: friendlyError,
+          isError: true,
+          failedQuestion: question,
         },
       ]);
     } finally {
@@ -143,6 +157,17 @@ export const ChatBox = () => {
                 )}
               >
                 <div className="whitespace-pre-wrap">{m.content}</div>
+
+                {m.isError && m.failedQuestion && (
+                  <button
+                    onClick={() => sendMessage(m.failedQuestion!)}
+                    disabled={isSending}
+                    className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-stone-900 text-stone-200 hover:text-white px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
+                  >
+                    <RefreshCw size={12} className={cn(isSending && "animate-spin")} />
+                    <span>Retry Question</span>
+                  </button>
+                )}
 
                 {m.isDataQuery && m.sql && (
                   <div className="mt-2.5 pt-2 border-t border-stone-200/80">
