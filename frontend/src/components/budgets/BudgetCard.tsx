@@ -140,41 +140,41 @@ export const BudgetCard = ({
 
         <div className="flex items-center gap-1">
           {isConfigured ? (
-            <>
-              <button
-                onClick={() => onAddMonth(category.id)}
-                title="Set budget for another month"
-                className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
-              >
-                <Plus size={13} />
-                Add Month
-              </button>
-              <button
-                onClick={() => onEdit(activeBudget)}
-                className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition-colors"
-                title="Edit this month's budget limit"
-                aria-label="Edit budget"
-              >
-                <Pencil size={15} />
-              </button>
-              <button
-                onClick={() => onDelete(activeBudget.id)}
-                className="rounded-md p-1.5 text-stone-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                title="Delete this month's budget"
-                aria-label="Delete budget"
-              >
-                <Trash2 size={15} />
-              </button>
-            </>
+            <button
+              onClick={() => onAddMonth(category.id)}
+              title="Set budget for another month"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+            >
+              <Plus size={13} />
+              Add Month
+            </button>
           ) : (
             <button
               onClick={() => onEdit(activeBudget)}
-              className="flex items-center gap-1 rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors shadow-2xs"
+              className="flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors shadow-2xs"
             >
               <Plus size={13} />
               Set Limit
             </button>
           )}
+
+          <button
+            onClick={() => onEdit(activeBudget)}
+            className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition-colors"
+            title={isConfigured ? "Edit budget limit" : "Set budget limit"}
+            aria-label="Edit budget"
+          >
+            <Pencil size={15} />
+          </button>
+
+          <button
+            onClick={() => onDelete(activeBudget.id)}
+            className="rounded-md p-1.5 text-stone-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            title={isConfigured ? "Delete / Reset budget limit" : "Reset budget limit"}
+            aria-label="Delete budget"
+          >
+            <Trash2 size={15} />
+          </button>
         </div>
       </div>
 

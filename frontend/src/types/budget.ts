@@ -13,6 +13,9 @@ export interface Budget {
   spent?: number;
   remaining?: number;
   percentUsed?: number;
+  isRecurring?: boolean;
+  isUnset?: boolean;
+  isOverall?: boolean;
 }
 
 export interface CreateBudgetPayload {

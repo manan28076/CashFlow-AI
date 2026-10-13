@@ -39,24 +39,35 @@ const attachProgress = async (budget) => {
   const start = new Date(budget.year, budget.month - 1, 1);
   const end = new Date(budget.year, budget.month, 1);
 
+  const isOverall = budget.category?.name === "Overall" || budget.isOverall;
+
+  const where = {
+    type: "EXPENSE",
+    account: { userId: budget.userId },
+    date: { gte: start, lt: end },
+    ...(!isOverall && { categoryId: budget.categoryId }),
+  };
+
   const result = await prisma.transaction.aggregate({
-    where: {
-      categoryId: budget.categoryId,
-      type: "EXPENSE",
-      account: { userId: budget.userId },
-      date: { gte: start, lt: end },
-    },
+    where,
     _sum: { amount: true },
   });
 
   const spent = result._sum.amount || 0;
-  const percentUsed = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+  const percentUsed =
+    budget.amount > 0
+      ? (spent / budget.amount) * 100
+      : spent > 0
+      ? 100
+      : 0;
 
   return {
     ...budget,
     spent,
     remaining: budget.amount - spent,
     percentUsed,
+    isUnset: budget.amount === 0,
+    isOverall,
   };
 };
 
@@ -68,7 +79,11 @@ const getBudgets = async (userId, month, year) => {
   });
 
   const categories = await prisma.category.findMany({
-    where: { name: { notIn: ["Salary", "Freelance"] } },
+    where: { name: { notIn: ["Salary", "Freelance", "Overall"] } },
+  });
+
+  const overallCategory = await prisma.category.findUnique({
+    where: { name: "Overall" },
   });
 
   const now = new Date();
@@ -107,6 +122,7 @@ const getBudgets = async (userId, month, year) => {
 
   const allBudgets = [];
 
+  // 1. Process category budgets (Food, Shopping, Travel, etc.)
   for (const cat of categories) {
     const config = catConfigMap.get(cat.id);
 
@@ -141,6 +157,49 @@ const getBudgets = async (userId, month, year) => {
           categoryId: cat.id,
           category: cat,
           isUnset: true,
+        });
+      }
+    }
+  }
+
+  // 2. Process Overall Monthly Budget if overallCategory exists
+  if (overallCategory) {
+    const overallConfig = catConfigMap.get(overallCategory.id);
+
+    for (const key of monthKeys) {
+      const [kYear, kMonth] = key.split("-").map(Number);
+
+      if (month && Number(month) !== kMonth) continue;
+      if (year && Number(year) !== kYear) continue;
+
+      if (overallConfig && overallConfig.months.has(key)) {
+        allBudgets.push({
+          ...overallConfig.months.get(key),
+          isOverall: true,
+        });
+      } else if (overallConfig) {
+        allBudgets.push({
+          id: `rec_${overallCategory.id}_${kYear}_${kMonth}`,
+          amount: overallConfig.latestAmount,
+          month: kMonth,
+          year: kYear,
+          userId,
+          categoryId: overallCategory.id,
+          category: overallCategory,
+          isRecurring: true,
+          isOverall: true,
+        });
+      } else {
+        allBudgets.push({
+          id: `unset_${overallCategory.id}_${kYear}_${kMonth}`,
+          amount: 0,
+          month: kMonth,
+          year: kYear,
+          userId,
+          categoryId: overallCategory.id,
+          category: overallCategory,
+          isUnset: true,
+          isOverall: true,
         });
       }
     }

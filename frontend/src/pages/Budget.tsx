@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, PiggyBank, Calendar } from "lucide-react";
+import { Plus, PiggyBank, Calendar, Pencil, Trash2, Target } from "lucide-react";
 import { budgetService } from "../services/budget.service";
 import { categoryService } from "../services/category.service";
 import { BudgetCard } from "../components/budgets/BudgetCard";
@@ -30,6 +30,9 @@ export const Budget = () => {
   const [filterMonth, setFilterMonth] = useState<number | null>(currentMonth);
   const [filterYear, setFilterYear] = useState<number | null>(currentYear);
 
+  const activeM = filterMonth || currentMonth;
+  const activeY = filterYear || currentYear;
+
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -50,14 +53,30 @@ export const Budget = () => {
     loadData();
   }, []);
 
-  // Filter out pure income categories (Salary, Freelance)
+  // Filter out pure income categories (Salary, Freelance) and the system category (Overall)
   const expenseCategories = useMemo(() => {
     return categories.filter(
-      (c) => c.name !== "Salary" && c.name !== "Freelance"
+      (c) => c.name !== "Salary" && c.name !== "Freelance" && c.name !== "Overall"
     );
   }, [categories]);
 
-  // Group budgets by Category, ensuring ALL expense categories are represented
+  const overallCategory = useMemo(() => {
+    return categories.find((c) => c.name === "Overall");
+  }, [categories]);
+
+  // Overall budget for active month if configured
+  const overallBudget = useMemo(() => {
+    return budgets.find(
+      (b) =>
+        (b.isOverall || b.category?.name === "Overall") &&
+        b.month === activeM &&
+        b.year === activeY
+    );
+  }, [budgets, activeM, activeY]);
+
+  const isCustomOverall = Boolean(overallBudget && (overallBudget.amount ?? 0) > 0);
+
+  // Group budgets by Category, ensuring ALL expense categories are represented (excluding Overall)
   const groupedCategories = useMemo(() => {
     const map = new Map<string, { category: Category; budgets: BudgetType[] }>();
 
@@ -67,6 +86,9 @@ export const Budget = () => {
     });
 
     budgets.forEach((b) => {
+      // Skip overall budget from category list cards below
+      if (b.isOverall || b.category?.name === "Overall") return;
+
       const catId = b.categoryId;
       if (!map.has(catId)) {
         const catObj =
@@ -123,12 +145,28 @@ export const Budget = () => {
         ? budgets.filter((b) => b.month === filterMonth && b.year === filterYear)
         : budgets;
 
-    const totalBudget = activeBudgets.reduce((acc, b) => acc + (b.amount || 0), 0);
-    const totalSpent = activeBudgets.reduce((acc, b) => acc + (b.spent || 0), 0);
+    const categoryBudgets = activeBudgets.filter(
+      (b) => !b.isOverall && b.category?.name !== "Overall"
+    );
+
+    // If an overall budget limit is set for this month, use that as target!
+    let totalBudget = 0;
+    let totalSpent = 0;
+
+    if (isCustomOverall && overallBudget) {
+      totalBudget = overallBudget.amount || 0;
+      totalSpent = overallBudget.spent || 0;
+    } else {
+      totalBudget = categoryBudgets.reduce((acc, b) => acc + (b.amount || 0), 0);
+      totalSpent =
+        overallBudget?.spent ??
+        categoryBudgets.reduce((acc, b) => acc + (b.spent || 0), 0);
+    }
+
     const remaining = totalBudget - totalSpent;
     const percent = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
-    const configuredCount = activeBudgets.filter((b) => (b.amount || 0) > 0).length;
-    const totalCount = expenseCategories.length || activeBudgets.length;
+    const configuredCount = categoryBudgets.filter((b) => (b.amount || 0) > 0).length;
+    const totalCount = expenseCategories.length || categoryBudgets.length;
 
     return {
       totalBudget,
@@ -138,7 +176,7 @@ export const Budget = () => {
       configuredCount,
       totalCount,
     };
-  }, [budgets, filterMonth, filterYear, expenseCategories]);
+  }, [budgets, filterMonth, filterYear, expenseCategories, isCustomOverall, overallBudget]);
 
   const handleAdd = () => {
     setEditingBudget(null);
@@ -158,14 +196,55 @@ export const Budget = () => {
     setIsModalOpen(true);
   };
 
+  // Set or Edit the Overall Monthly Budget
+  const handleEditOverall = () => {
+    if (!overallCategory) {
+      toast.error("Overall category not found");
+      return;
+    }
+    const existing = overallBudget || {
+      id: `unset_${overallCategory.id}_${activeY}_${activeM}`,
+      amount: 0,
+      month: activeM,
+      year: activeY,
+      userId: "",
+      categoryId: overallCategory.id,
+      category: overallCategory,
+      isOverall: true,
+    };
+    setEditingBudget(existing as BudgetType);
+    setModalDefaultCategoryId(overallCategory.id);
+    setIsModalOpen(true);
+  };
+
+  const handleResetOverall = async () => {
+    if (!overallBudget) return;
+    if (!confirm("Reset overall monthly budget limit?")) return;
+    try {
+      await budgetService.remove(overallBudget.id);
+      toast.success("Overall monthly budget reset");
+      await loadData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to reset");
+    }
+  };
+
   const handleSubmit = async (
     payload: CreateBudgetPayload,
     repeatMonths: number = 1
   ) => {
     try {
-      if (editingBudget && !editingBudget.id.startsWith("unset_") && !editingBudget.id.startsWith("rec_")) {
+      if (
+        editingBudget &&
+        !editingBudget.id.startsWith("unset_") &&
+        !editingBudget.id.startsWith("rec_")
+      ) {
         await budgetService.update(editingBudget.id, payload);
-        toast.success("Budget limit updated");
+        toast.success(
+          payload.categoryId === overallCategory?.id
+            ? "Overall monthly budget updated"
+            : "Budget limit updated"
+        );
       } else {
         if (repeatMonths > 1) {
           let curM = payload.month;
@@ -186,7 +265,11 @@ export const Budget = () => {
           toast.success(`Budget created for ${repeatMonths} months`);
         } else {
           await budgetService.create(payload);
-          toast.success("Budget limit set");
+          toast.success(
+            payload.categoryId === overallCategory?.id
+              ? "Overall monthly budget saved"
+              : "Budget limit set"
+          );
         }
       }
       await loadData();
@@ -213,13 +296,23 @@ export const Budget = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-stone-900">Budget</h1>
           <p className="text-sm text-stone-500">
-            Set and track monthly spending limits for every category
+            Set and track spending limits by total monthly budget or per category
           </p>
         </div>
-        <Button onClick={handleAdd} className="gap-2 self-start sm:self-auto">
-          <Plus size={16} />
-          + Add Category Budget
-        </Button>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <Button
+            onClick={handleEditOverall}
+            variant="secondary"
+            className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+          >
+            <Target size={16} />
+            {isCustomOverall ? "Edit Total Budget" : "Set Total Monthly Budget"}
+          </Button>
+          <Button onClick={handleAdd} className="gap-2">
+            <Plus size={16} />
+            + Add Category Budget
+          </Button>
+        </div>
       </div>
 
       {/* Focus Month Selector Pills */}
@@ -280,40 +373,70 @@ export const Budget = () => {
         </div>
       )}
 
-      {/* Total Monthly Budget Overview Banner */}
+      {/* TOP BOX: Overall Monthly Budget Card */}
       <Card className="bg-gradient-to-br from-stone-900 via-stone-850 to-stone-800 text-white border-none shadow-md p-5 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2 text-stone-300 text-xs font-medium">
-              <Calendar size={14} className="text-stone-400" />
-              <span>
-                {filterMonth && filterYear
-                  ? `${monthName(filterMonth)} ${filterYear} Budget Overview`
-                  : "Overall Budget Overview"}
-              </span>
-              <span className="rounded-full bg-stone-700/80 px-2 py-0.5 text-[10px] font-semibold text-stone-300">
-                {summary.configuredCount} of {summary.totalCount} categories budgeted
-              </span>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <div className="flex items-center gap-1.5 text-stone-300 font-medium">
+                <Calendar size={14} className="text-stone-400" />
+                <span>
+                  {filterMonth && filterYear
+                    ? `${monthName(filterMonth)} ${filterYear} Monthly Budget`
+                    : "Overall Monthly Budget"}
+                </span>
+              </div>
+
+              {isCustomOverall ? (
+                <span className="rounded-full bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 px-2.5 py-0.5 text-[11px] font-semibold flex items-center gap-1">
+                  <Target size={12} /> Total Monthly Target Set
+                </span>
+              ) : (
+                <span className="rounded-full bg-stone-700/80 px-2 py-0.5 text-[10px] font-semibold text-stone-300">
+                  {summary.configuredCount} of {summary.totalCount} categories budgeted
+                </span>
+              )}
             </div>
 
-            <div className="flex items-baseline gap-3 mt-1">
+            {/* Spent of Limit Line with Inline Action Button */}
+            <div className="flex items-center gap-3 flex-wrap mt-0.5">
               <span className="text-2xl sm:text-3xl font-bold font-numeric">
                 {formatCurrency(summary.totalSpent)}
               </span>
-              <span className="text-stone-300 text-sm font-numeric">
+              <span className="text-stone-300 text-sm font-numeric flex items-center gap-2">
                 spent of{" "}
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-white text-base">
                   {summary.totalBudget > 0
                     ? formatCurrency(summary.totalBudget)
                     : "₹0 limit"}
                 </span>
+
+                {/* Edit & Reset Overall Budget Buttons */}
+                <button
+                  onClick={handleEditOverall}
+                  className="rounded-md bg-stone-700/80 px-2.5 py-1 text-xs font-medium text-stone-200 hover:bg-stone-600 hover:text-white transition-colors flex items-center gap-1 shadow-2xs"
+                  title="Change monthly budget limit"
+                >
+                  <Pencil size={12} />
+                  {isCustomOverall ? "Edit Limit" : "Set Limit"}
+                </button>
+
+                {isCustomOverall && (
+                  <button
+                    onClick={handleResetOverall}
+                    className="rounded-md p-1 text-stone-400 hover:bg-stone-700/80 hover:text-red-400 transition-colors"
+                    title="Reset overall budget to category sum"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </span>
             </div>
 
             <p className="text-xs mt-0.5">
               {summary.totalBudget === 0 ? (
                 <span className="text-amber-400 font-medium">
-                  Categories default to ₹0 limit. Click "Set Limit" on any category card below to start budgeting!
+                  No monthly budget limit set yet. Click "Set Limit" above to set a target for all expenses!
                 </span>
               ) : summary.remaining >= 0 ? (
                 <span className="text-emerald-400 font-medium">
@@ -321,7 +444,7 @@ export const Budget = () => {
                 </span>
               ) : (
                 <span className="text-red-400 font-medium">
-                  {formatCurrency(Math.abs(summary.remaining))} over allocated budget!
+                  {formatCurrency(Math.abs(summary.remaining))} over monthly budget!
                 </span>
               )}
             </p>
@@ -330,7 +453,7 @@ export const Budget = () => {
           {/* Overall Progress Gauge */}
           <div className="flex flex-col gap-2 min-w-[200px] md:max-w-[280px] w-full">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-stone-400">Total Monthly Budget Utilized</span>
+              <span className="text-stone-400">Total Budget Utilized</span>
               <span
                 className={cn(
                   "font-numeric font-bold",
