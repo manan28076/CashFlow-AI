@@ -9,6 +9,7 @@ interface AuditContextType {
   auditResult: LiveAuditResult | null;
   lastAuditedAt: string | null;
   startAudit: () => Promise<void>;
+  clearAudit: () => void;
 }
 
 const AuditContext = createContext<AuditContextType | null>(null);
@@ -19,20 +20,16 @@ export const AuditProvider = ({ children }: { children: ReactNode }) => {
   const [auditResult, setAuditResult] = useState<LiveAuditResult | null>(null);
   const [lastAuditedAt, setLastAuditedAt] = useState<string | null>(null);
 
+  // Clear any old persistent localStorage from prior versions so report resets on fresh reload
   useEffect(() => {
-    const cached = localStorage.getItem("cashflow_live_audit");
-    const cachedTime = localStorage.getItem("cashflow_live_audit_time");
-    if (cached) {
-      try {
-        setAuditResult(JSON.parse(cached));
-      } catch {
-        // Ignore
-      }
-    }
-    if (cachedTime) {
-      setLastAuditedAt(cachedTime);
-    }
+    localStorage.removeItem("cashflow_live_audit");
+    localStorage.removeItem("cashflow_live_audit_time");
   }, []);
+
+  const clearAudit = () => {
+    setAuditResult(null);
+    setLastAuditedAt(null);
+  };
 
   const startAudit = async () => {
     if (isAuditing) return;
@@ -53,11 +50,10 @@ export const AuditProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      // Keep only in session in-memory state (resets on refresh / window close)
       setAuditResult(data);
       const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       setLastAuditedAt(timeStr);
-      localStorage.setItem("cashflow_live_audit", JSON.stringify(data));
-      localStorage.setItem("cashflow_live_audit_time", timeStr);
 
       toast.success("Financial Health Audit complete! 🎉 Redirecting to your results...", {
         id: toastId,
@@ -82,6 +78,7 @@ export const AuditProvider = ({ children }: { children: ReactNode }) => {
         auditResult,
         lastAuditedAt,
         startAudit,
+        clearAudit,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import { Sparkles, RefreshCw, ShieldCheck, ArrowUpRight, Loader2 } from "lucide-react";
+import { Sparkles, RefreshCw, ShieldCheck, ArrowUpRight, Loader2, X, FileBarChart2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAudit } from "../contexts/AuditContext";
 import { InsightCard } from "../components/ai/InsightCard";
@@ -9,7 +9,7 @@ import { ChatBox } from "../components/ai/ChatBox";
 import { Button } from "../components/ui/Button";
 
 export const AIAssistant = () => {
-  const { isAuditing, auditResult, lastAuditedAt, startAudit } = useAudit();
+  const { isAuditing, auditResult, lastAuditedAt, startAudit, clearAudit } = useAudit();
 
   return (
     <div className="flex flex-col gap-6">
@@ -30,11 +30,6 @@ export const AIAssistant = () => {
         </div>
 
         <div className="flex items-center gap-3 self-start sm:self-auto">
-          {lastAuditedAt && !isAuditing && (
-            <span className="text-xs text-stone-400 hidden md:inline">
-              Audited at {lastAuditedAt}
-            </span>
-          )}
           <Button
             onClick={startAudit}
             disabled={isAuditing}
@@ -74,15 +69,49 @@ export const AIAssistant = () => {
         </div>
       )}
 
-      {/* Intelligence Grid (4 Core Real Cards) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <HealthCard data={auditResult?.health ?? null} />
-        <InsightCard data={auditResult?.insights ?? null} />
-        <BudgetAdviceCard data={auditResult?.budget ?? null} />
-        <FraudCard data={auditResult?.fraud ?? null} />
-      </div>
+      {/* SESSION AUDIT REPORT (Appears when audit is run, dismissible or resets on refresh/screen close) */}
+      {auditResult && !isAuditing && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-stone-200/90 bg-stone-50/50 p-4 sm:p-5 shadow-xs">
+          <div className="flex items-center justify-between border-b border-stone-200/70 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-600 text-white">
+                <FileBarChart2 size={15} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-stone-900">Live Audit Report</h3>
+                  <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                    Active Session
+                  </span>
+                </div>
+                {lastAuditedAt && (
+                  <p className="text-[11px] text-stone-500">
+                    Scanned at {lastAuditedAt} &bull; Clears when you refresh or close this screen
+                  </p>
+                )}
+              </div>
+            </div>
 
-      {/* Audit Banner if never audited & not currently auditing */}
+            <button
+              onClick={clearAudit}
+              className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium text-stone-500 hover:bg-stone-200/60 hover:text-stone-800 transition-colors cursor-pointer"
+              title="Close audit report"
+            >
+              <span>Close Report</span>
+              <X size={14} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-1">
+            <HealthCard data={auditResult.health} />
+            <InsightCard data={auditResult.insights} />
+            <BudgetAdviceCard data={auditResult.budget} />
+            <FraudCard data={auditResult.fraud} />
+          </div>
+        </div>
+      )}
+
+      {/* Audit Banner when no audit has been run in this session */}
       {!auditResult && !isAuditing && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-dashed border-stone-300 bg-white/70 p-5 shadow-2xs">
           <div className="flex items-center gap-3">
@@ -100,10 +129,10 @@ export const AIAssistant = () => {
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <Link
-              to="/import"
+              to="/transactions"
               className="text-xs font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1"
             >
-              Import more data <ArrowUpRight size={13} />
+              View Transactions <ArrowUpRight size={13} />
             </Link>
             <Button
               onClick={startAudit}
