@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pencil, Trash2, Plus, Calendar, ChevronRight } from "lucide-react";
 import { Card } from "../ui/Card";
 import { formatCurrency, monthName } from "../../utils/formatters";
@@ -93,11 +93,11 @@ export const BudgetCard = ({
             className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold text-white shadow-xs"
             style={{ backgroundColor: category.color || "#4f46e5" }}
           >
-            {category.name.slice(0, 2).toUpperCase()}
+            {(category.name || "Category").slice(0, 2).toUpperCase()}
           </div>
           <div>
             <h3 className="font-semibold text-stone-900 leading-tight">
-              {category.name}
+              {category.name || "Category"}
             </h3>
             <p className="text-xs text-stone-500">
               {sortedBudgets.length} {sortedBudgets.length === 1 ? "month" : "months"} tracked
