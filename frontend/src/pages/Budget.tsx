@@ -5,22 +5,34 @@ import { budgetService } from "../services/budget.service";
 import { categoryService } from "../services/category.service";
 import { BudgetCard } from "../components/budgets/BudgetCard";
 import { BudgetFormModal } from "../components/budgets/BudgetFormModal";
+import { MonthlyBudgetModal } from "../components/budgets/MonthlyBudgetModal";
 import { Button } from "../components/ui/Button";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Card } from "../components/ui/Card";
 import { formatCurrency, monthName } from "../utils/formatters";
 import { cn } from "../utils/cn";
-import type { Budget as BudgetType, CreateBudgetPayload } from "../types/budget";
+import type {
+  Budget as BudgetType,
+  MonthlyBudget as MonthlyBudgetType,
+  CreateBudgetPayload,
+  SetMonthlyBudgetPayload,
+} from "../types/budget";
 import type { Category } from "../types/category";
 
 export const Budget = () => {
   const [budgets, setBudgets] = useState<BudgetType[]>([]);
+  const [monthlyBudgets, setMonthlyBudgets] = useState<MonthlyBudgetType[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Category Modal state
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<BudgetType | null>(null);
   const [modalDefaultCategoryId, setModalDefaultCategoryId] = useState<string>("");
+
+  // Dedicated Monthly Budget Modal state
+  const [isMonthlyModalOpen, setIsMonthlyModalOpen] = useState(false);
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
@@ -36,12 +48,14 @@ export const Budget = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [budgetData, categoryData] = await Promise.all([
+      const [budgetData, categoryData, monthlyData] = await Promise.all([
         budgetService.getAll(),
         categoryService.getAll(),
+        budgetService.getMonthlyBudgets(),
       ]);
       setBudgets(budgetData);
       setCategories(categoryData);
+      setMonthlyBudgets(monthlyData);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load budgets");
     } finally {
@@ -53,30 +67,23 @@ export const Budget = () => {
     loadData();
   }, []);
 
-  // Filter out pure income categories (Salary, Freelance) and the system category (Overall)
+  // Filter out pure income categories (Salary, Freelance) and system category (Overall)
   const expenseCategories = useMemo(() => {
     return categories.filter(
       (c) => c.name !== "Salary" && c.name !== "Freelance" && c.name !== "Overall"
     );
   }, [categories]);
 
-  const overallCategory = useMemo(() => {
-    return categories.find((c) => c.name === "Overall");
-  }, [categories]);
+  // Overall monthly budget record for active month if configured
+  const activeMonthlyBudget = useMemo(() => {
+    return monthlyBudgets.find((mb) => mb.month === activeM && mb.year === activeY);
+  }, [monthlyBudgets, activeM, activeY]);
 
-  // Overall budget for active month if configured
-  const overallBudget = useMemo(() => {
-    return budgets.find(
-      (b) =>
-        (b.isOverall || b.category?.name === "Overall") &&
-        b.month === activeM &&
-        b.year === activeY
-    );
-  }, [budgets, activeM, activeY]);
+  const isCustomMonthlyBudget = Boolean(
+    activeMonthlyBudget && activeMonthlyBudget.isSet && activeMonthlyBudget.amount > 0
+  );
 
-  const isCustomOverall = Boolean(overallBudget && (overallBudget.amount ?? 0) > 0);
-
-  // Group budgets by Category, ensuring ALL expense categories are represented (excluding Overall)
+  // Group budgets by Category, ensuring ALL expense categories are represented (no Overall)
   const groupedCategories = useMemo(() => {
     const map = new Map<string, { category: Category; budgets: BudgetType[] }>();
 
@@ -86,8 +93,8 @@ export const Budget = () => {
     });
 
     budgets.forEach((b) => {
-      // Skip overall budget from category list cards below
-      if (b.isOverall || b.category?.name === "Overall") return;
+      // Exclude any accidental overall budget item
+      if (b.category?.name === "Overall") return;
 
       const catId = b.categoryId;
       if (!map.has(catId)) {
@@ -102,7 +109,7 @@ export const Budget = () => {
       map.get(catId)!.budgets.push(b);
     });
 
-    // Sort: Configured categories with limits first, then categories with spending, then unconfigured
+    // Sort: Configured categories with limits first, then categories with spending, then alphabetically
     return Array.from(map.values()).sort((a, b) => {
       const aMaxLimit = Math.max(...a.budgets.map((x) => x.amount || 0), 0);
       const bMaxLimit = Math.max(...b.budgets.map((x) => x.amount || 0), 0);
@@ -117,14 +124,19 @@ export const Budget = () => {
     });
   }, [budgets, categories, expenseCategories]);
 
-  // Unique list of active month/years found across budgets (or current month)
+  // Unique list of active month/years found across monthlyBudgets, category budgets, and current month
   const availableMonths = useMemo(() => {
     const set = new Set<string>();
     // Always include current month
     set.add(`${currentYear}-${currentMonth}`);
 
+    monthlyBudgets.forEach((mb) => {
+      if (mb.amount > 0 || mb.spent > 0) {
+        set.add(`${mb.year}-${mb.month}`);
+      }
+    });
+
     budgets.forEach((b) => {
-      // Include month if budget has an amount OR has spent > 0
       if ((b.amount && b.amount > 0) || (b.spent && b.spent > 0)) {
         set.add(`${b.year}-${b.month}`);
       }
@@ -136,7 +148,7 @@ export const Budget = () => {
         return { year, month };
       })
       .sort((a, b) => (b.year !== a.year ? b.year - a.year : b.month - a.month));
-  }, [budgets, currentMonth, currentYear]);
+  }, [budgets, monthlyBudgets, currentMonth, currentYear]);
 
   // Calculate overall summary metrics for the selected month
   const summary = useMemo(() => {
@@ -146,25 +158,25 @@ export const Budget = () => {
         : budgets;
 
     const categoryBudgets = activeBudgets.filter(
-      (b) => !b.isOverall && b.category?.name !== "Overall"
+      (b) => b.category?.name !== "Overall"
     );
 
-    // If an overall budget limit is set for this month, use that as target!
     let totalBudget = 0;
     let totalSpent = 0;
 
-    if (isCustomOverall && overallBudget) {
-      totalBudget = overallBudget.amount || 0;
-      totalSpent = overallBudget.spent || 0;
+    if (isCustomMonthlyBudget && activeMonthlyBudget) {
+      totalBudget = activeMonthlyBudget.amount;
+      totalSpent = activeMonthlyBudget.spent;
     } else {
       totalBudget = categoryBudgets.reduce((acc, b) => acc + (b.amount || 0), 0);
       totalSpent =
-        overallBudget?.spent ??
+        activeMonthlyBudget?.spent ??
         categoryBudgets.reduce((acc, b) => acc + (b.spent || 0), 0);
     }
 
     const remaining = totalBudget - totalSpent;
-    const percent = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
+    const percent =
+      totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
     const configuredCount = categoryBudgets.filter((b) => (b.amount || 0) > 0).length;
     const totalCount = expenseCategories.length || categoryBudgets.length;
 
@@ -176,60 +188,34 @@ export const Budget = () => {
       configuredCount,
       totalCount,
     };
-  }, [budgets, filterMonth, filterYear, expenseCategories, isCustomOverall, overallBudget]);
+  }, [
+    budgets,
+    filterMonth,
+    filterYear,
+    expenseCategories,
+    isCustomMonthlyBudget,
+    activeMonthlyBudget,
+  ]);
 
-  const handleAdd = () => {
+  const handleAddCategoryBudget = () => {
     setEditingBudget(null);
     setModalDefaultCategoryId(expenseCategories[0]?.id || "");
-    setIsModalOpen(true);
+    setIsCategoryModalOpen(true);
   };
 
   const handleAddForCategory = (categoryId: string) => {
     setEditingBudget(null);
     setModalDefaultCategoryId(categoryId);
-    setIsModalOpen(true);
+    setIsCategoryModalOpen(true);
   };
 
-  const handleEdit = (b: BudgetType) => {
+  const handleEditCategoryBudget = (b: BudgetType) => {
     setEditingBudget(b);
     setModalDefaultCategoryId(b.categoryId);
-    setIsModalOpen(true);
+    setIsCategoryModalOpen(true);
   };
 
-  // Set or Edit the Overall Monthly Budget
-  const handleEditOverall = () => {
-    if (!overallCategory) {
-      toast.error("Overall category not found");
-      return;
-    }
-    const existing = overallBudget || {
-      id: `unset_${overallCategory.id}_${activeY}_${activeM}`,
-      amount: 0,
-      month: activeM,
-      year: activeY,
-      userId: "",
-      categoryId: overallCategory.id,
-      category: overallCategory,
-      isOverall: true,
-    };
-    setEditingBudget(existing as BudgetType);
-    setModalDefaultCategoryId(overallCategory.id);
-    setIsModalOpen(true);
-  };
-
-  const handleResetOverall = async () => {
-    if (!overallBudget) return;
-    if (!confirm("Reset overall monthly budget limit?")) return;
-    try {
-      await budgetService.remove(overallBudget.id);
-      toast.success("Overall monthly budget reset");
-      await loadData();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to reset");
-    }
-  };
-
-  const handleSubmit = async (
+  const handleSubmitCategoryBudget = async (
     payload: CreateBudgetPayload,
     repeatMonths: number = 1
   ) => {
@@ -240,11 +226,7 @@ export const Budget = () => {
         !editingBudget.id.startsWith("rec_")
       ) {
         await budgetService.update(editingBudget.id, payload);
-        toast.success(
-          payload.categoryId === overallCategory?.id
-            ? "Overall monthly budget updated"
-            : "Budget limit updated"
-        );
+        toast.success("Budget limit updated");
       } else {
         if (repeatMonths > 1) {
           let curM = payload.month;
@@ -265,11 +247,7 @@ export const Budget = () => {
           toast.success(`Budget created for ${repeatMonths} months`);
         } else {
           await budgetService.create(payload);
-          toast.success(
-            payload.categoryId === overallCategory?.id
-              ? "Overall monthly budget saved"
-              : "Budget limit set"
-          );
+          toast.success("Budget limit set");
         }
       }
       await loadData();
@@ -278,7 +256,7 @@ export const Budget = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteCategoryBudget = async (id: string) => {
     if (!confirm("Reset budget limit for this category?")) return;
     try {
       await budgetService.remove(id);
@@ -289,6 +267,38 @@ export const Budget = () => {
     }
   };
 
+  // Month Overall Budget Handlers
+  const handleOpenMonthlyBudgetModal = () => {
+    setIsMonthlyModalOpen(true);
+  };
+
+  const handleSubmitMonthlyBudget = async (payload: SetMonthlyBudgetPayload) => {
+    try {
+      await budgetService.setMonthlyBudget(payload);
+      toast.success(
+        payload.repeatMonths && payload.repeatMonths > 1
+          ? `Monthly budget saved for ${payload.repeatMonths} months`
+          : "Monthly budget saved"
+      );
+      await loadData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save monthly budget");
+    }
+  };
+
+  const handleResetMonthlyBudget = async () => {
+    if (!confirm(`Reset overall monthly budget limit for ${monthName(activeM)} ${activeY}?`)) {
+      return;
+    }
+    try {
+      await budgetService.removeMonthlyBudget(activeM, activeY);
+      toast.success("Monthly budget reset");
+      await loadData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to reset monthly budget");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* Page Header */}
@@ -296,21 +306,21 @@ export const Budget = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-stone-900">Budget</h1>
           <p className="text-sm text-stone-500">
-            Set and track spending limits by total monthly budget or per category
+            Set and track spending limits by monthly total or per category
           </p>
         </div>
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <Button
-            onClick={handleEditOverall}
+            onClick={handleOpenMonthlyBudgetModal}
             variant="secondary"
-            className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+            className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-medium"
           >
             <Target size={16} />
-            {isCustomOverall ? "Edit Total Budget" : "Set Total Monthly Budget"}
+            {isCustomMonthlyBudget ? "Edit Monthly Budget" : "Set Monthly Budget"}
           </Button>
-          <Button onClick={handleAdd} className="gap-2">
+          <Button onClick={handleAddCategoryBudget} className="gap-2 font-medium">
             <Plus size={16} />
-            + Add Category Budget
+            Add Category Limit
           </Button>
         </div>
       </div>
@@ -373,7 +383,7 @@ export const Budget = () => {
         </div>
       )}
 
-      {/* TOP BOX: Overall Monthly Budget Card */}
+      {/* TOP BOX: Dedicated Month Overall Budget Card */}
       <Card className="bg-gradient-to-br from-stone-900 via-stone-850 to-stone-800 text-white border-none shadow-md p-5 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex flex-col gap-2">
@@ -382,23 +392,27 @@ export const Budget = () => {
                 <Calendar size={14} className="text-stone-400" />
                 <span>
                   {filterMonth && filterYear
-                    ? `${monthName(filterMonth)} ${filterYear} Monthly Budget`
-                    : "Overall Monthly Budget"}
+                    ? `${monthName(filterMonth)} ${filterYear} Overall Budget`
+                    : "Monthly Overall Budget"}
                 </span>
               </div>
 
-              {isCustomOverall ? (
+              {isCustomMonthlyBudget ? (
                 <span className="rounded-full bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 px-2.5 py-0.5 text-[11px] font-semibold flex items-center gap-1">
                   <Target size={12} /> Total Monthly Target Set
                 </span>
-              ) : (
-                <span className="rounded-full bg-stone-700/80 px-2 py-0.5 text-[10px] font-semibold text-stone-300">
+              ) : summary.totalBudget > 0 ? (
+                <span className="rounded-full bg-stone-700/80 px-2.5 py-0.5 text-[11px] font-semibold text-stone-300">
                   {summary.configuredCount} of {summary.totalCount} categories budgeted
+                </span>
+              ) : (
+                <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-semibold">
+                  No Monthly Limit Set
                 </span>
               )}
             </div>
 
-            {/* Spent of Limit Line with Inline Action Button */}
+            {/* Spent of Limit Line with Action Buttons */}
             <div className="flex items-center gap-3 flex-wrap mt-0.5">
               <span className="text-2xl sm:text-3xl font-bold font-numeric">
                 {formatCurrency(summary.totalSpent)}
@@ -411,21 +425,21 @@ export const Budget = () => {
                     : "₹0 limit"}
                 </span>
 
-                {/* Edit & Reset Overall Budget Buttons */}
+                {/* Edit & Reset Monthly Budget Buttons */}
                 <button
-                  onClick={handleEditOverall}
-                  className="rounded-md bg-stone-700/80 px-2.5 py-1 text-xs font-medium text-stone-200 hover:bg-stone-600 hover:text-white transition-colors flex items-center gap-1 shadow-2xs"
-                  title="Change monthly budget limit"
+                  onClick={handleOpenMonthlyBudgetModal}
+                  className="rounded-md bg-stone-700/90 px-2.5 py-1 text-xs font-medium text-stone-200 hover:bg-stone-600 hover:text-white transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
+                  title="Set or change total monthly budget limit"
                 >
                   <Pencil size={12} />
-                  {isCustomOverall ? "Edit Limit" : "Set Limit"}
+                  {isCustomMonthlyBudget ? "Edit Limit" : "Set Monthly Budget"}
                 </button>
 
-                {isCustomOverall && (
+                {isCustomMonthlyBudget && (
                   <button
-                    onClick={handleResetOverall}
-                    className="rounded-md p-1 text-stone-400 hover:bg-stone-700/80 hover:text-red-400 transition-colors"
-                    title="Reset overall budget to category sum"
+                    onClick={handleResetMonthlyBudget}
+                    className="rounded-md p-1 text-stone-400 hover:bg-stone-700 hover:text-red-400 transition-colors cursor-pointer"
+                    title="Reset monthly budget limit"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -436,11 +450,11 @@ export const Budget = () => {
             <p className="text-xs mt-0.5">
               {summary.totalBudget === 0 ? (
                 <span className="text-amber-400 font-medium">
-                  No monthly budget limit set yet. Click "Set Limit" above to set a target for all expenses!
+                  No monthly budget limit set yet. Click "Set Monthly Budget" to establish a spending target for {monthName(activeM)} {activeY}!
                 </span>
               ) : summary.remaining >= 0 ? (
                 <span className="text-emerald-400 font-medium">
-                  {formatCurrency(summary.remaining)} remaining safe to spend
+                  {formatCurrency(summary.remaining)} remaining safe to spend this month
                 </span>
               ) : (
                 <span className="text-red-400 font-medium">
@@ -450,10 +464,10 @@ export const Budget = () => {
             </p>
           </div>
 
-          {/* Overall Progress Gauge */}
+          {/* Month Progress Gauge */}
           <div className="flex flex-col gap-2 min-w-[200px] md:max-w-[280px] w-full">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-stone-400">Total Budget Utilized</span>
+              <span className="text-stone-400">Monthly Budget Utilized</span>
               <span
                 className={cn(
                   "font-numeric font-bold",
@@ -496,7 +510,17 @@ export const Budget = () => {
         </div>
       </Card>
 
-      {/* Main Budget Cards List: All Expense Categories */}
+      {/* Category Section Header */}
+      <div className="flex items-center justify-between pt-2">
+        <div>
+          <h2 className="text-lg font-bold text-stone-900">Category Budgets</h2>
+          <p className="text-xs text-stone-500">
+            Set individual limits for specific categories like Food, Bills, Shopping, Travel, etc.
+          </p>
+        </div>
+      </div>
+
+      {/* Main Budget Cards List: All Expense Categories (strictly real categories, no Overall card) */}
       {isLoading ? (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -508,7 +532,7 @@ export const Budget = () => {
           icon={<PiggyBank size={36} className="text-stone-400" />}
           title="No categories found"
           description="Categories will appear here once loaded."
-          action={<Button onClick={handleAdd}>Add First Budget</Button>}
+          action={<Button onClick={handleAddCategoryBudget}>Add First Category Limit</Button>}
         />
       ) : (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -517,8 +541,8 @@ export const Budget = () => {
               key={category.id}
               category={category}
               budgets={catBudgets}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+              onEdit={handleEditCategoryBudget}
+              onDelete={handleDeleteCategoryBudget}
               onAddMonth={handleAddForCategory}
               globalMonthFilter={filterMonth}
               globalYearFilter={filterYear}
@@ -527,14 +551,24 @@ export const Budget = () => {
         </div>
       )}
 
-      {/* Budget Creation & Edit Modal */}
+      {/* Category Budget Modal */}
       <BudgetFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmit}
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        onSubmit={handleSubmitCategoryBudget}
         categories={categories}
         initialData={editingBudget}
         defaultCategoryId={modalDefaultCategoryId}
+      />
+
+      {/* Dedicated Month Overall Budget Modal */}
+      <MonthlyBudgetModal
+        isOpen={isMonthlyModalOpen}
+        onClose={() => setIsMonthlyModalOpen(false)}
+        onSubmit={handleSubmitMonthlyBudget}
+        initialMonth={activeM}
+        initialYear={activeY}
+        currentAmount={activeMonthlyBudget?.amount || 0}
       />
     </div>
   );

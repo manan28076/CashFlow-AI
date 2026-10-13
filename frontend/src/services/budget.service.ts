@@ -2,8 +2,10 @@ import api from "./api";
 import type { ApiResponse } from "../types/api";
 import type {
   Budget,
+  MonthlyBudget,
   CreateBudgetPayload,
   UpdateBudgetPayload,
+  SetMonthlyBudgetPayload,
 } from "../types/budget";
 
 export const budgetService = {
@@ -29,5 +31,24 @@ export const budgetService = {
 
   remove: async (id: string) => {
     await api.delete<ApiResponse<null>>(`/budgets/${id}`);
+  },
+
+  // Dedicated Monthly Budget API
+  getMonthlyBudgets: async (month?: number, year?: number) => {
+    const res = await api.get<ApiResponse<MonthlyBudget[]>>("/budgets/monthly", {
+      params: { month, year },
+    });
+    return res.data.data;
+  },
+
+  setMonthlyBudget: async (payload: SetMonthlyBudgetPayload) => {
+    const res = await api.post<ApiResponse<MonthlyBudget>>("/budgets/monthly", payload);
+    return res.data.data;
+  },
+
+  removeMonthlyBudget: async (month: number, year: number) => {
+    await api.delete<ApiResponse<null>>("/budgets/monthly", {
+      params: { month, year },
+    });
   },
 };

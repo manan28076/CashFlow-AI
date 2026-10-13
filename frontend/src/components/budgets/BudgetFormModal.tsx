@@ -26,8 +26,12 @@ export const BudgetFormModal = ({
   initialData,
   defaultCategoryId,
 }: BudgetFormModalProps) => {
+  const expenseCategories = categories.filter(
+    (c) => c.name !== "Salary" && c.name !== "Freelance" && c.name !== "Overall"
+  );
+
   const [form, setForm] = useState<CreateBudgetPayload>({
-    categoryId: defaultCategoryId || "",
+    categoryId: defaultCategoryId || expenseCategories[0]?.id || "",
     amount: 0,
     month: now.getMonth() + 1,
     year: now.getFullYear(),
@@ -47,7 +51,7 @@ export const BudgetFormModal = ({
         setRepeatMonths(1);
       } else {
         setForm({
-          categoryId: defaultCategoryId || (categories[0]?.id ?? ""),
+          categoryId: defaultCategoryId || (expenseCategories[0]?.id ?? ""),
           amount: 0,
           month: now.getMonth() + 1,
           year: now.getFullYear(),
@@ -68,58 +72,40 @@ export const BudgetFormModal = ({
     }
   };
 
-  const targetCategory = categories.find((c) => c.id === form.categoryId);
-  const isOverall = targetCategory?.name === "Overall";
-
-  const expenseCategories = categories.filter(
-    (c) => c.name !== "Salary" && c.name !== "Freelance"
-  );
+  const targetCategory = expenseCategories.find((c) => c.id === form.categoryId);
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={
-        isOverall
-          ? initialData?.amount
-            ? "Edit Overall Monthly Budget"
-            : "Set Overall Monthly Budget"
-          : initialData?.amount
+        initialData?.amount
           ? `Edit ${targetCategory?.name || ""} Budget`
           : `Set ${targetCategory?.name || ""} Budget Limit`
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {isOverall ? (
-          <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-3 text-xs text-indigo-900">
-            <p className="font-semibold text-indigo-950">🎯 Overall Monthly Budget Limit</p>
-            <p className="mt-0.5 text-indigo-700">
-              This sets a single overall spending target for all your expenses combined this month, without needing to configure individual categories.
-            </p>
-          </div>
-        ) : (
-          <Select
-            id="categoryId"
-            label="Category"
-            value={form.categoryId}
-            onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-            required
-          >
-            <option value="">Select category</option>
-            {expenseCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name === "Overall" ? "🎯 Overall Monthly Budget (All Expenses)" : c.name}
-              </option>
-            ))}
-          </Select>
-        )}
+        <Select
+          id="categoryId"
+          label="Category"
+          value={form.categoryId}
+          onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+          required
+        >
+          <option value="">Select category</option>
+          {expenseCategories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </Select>
 
         <Input
           id="amount"
-          label={isOverall ? "Overall Monthly Limit (₹)" : "Category Monthly Limit (₹)"}
+          label="Monthly Category Limit (₹)"
           type="number"
           step="1"
-          placeholder={isOverall ? "e.g. 50000" : "e.g. 10000"}
+          placeholder="e.g. 10000"
           value={form.amount || ""}
           onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
           required
@@ -171,8 +157,6 @@ export const BudgetFormModal = ({
         <Button type="submit" isLoading={isSubmitting} className="mt-2 w-full">
           {initialData?.amount
             ? "Save Changes"
-            : isOverall
-            ? "Save Overall Monthly Budget"
             : repeatMonths > 1
             ? `Create for ${repeatMonths} Months`
             : "Save Budget Limit"}

@@ -7,6 +7,9 @@ const {
   getBudgets,
   updateBudget,
   deleteBudget,
+  getMonthlyBudgets,
+  setMonthlyBudget,
+  deleteMonthlyBudget,
 } = require("./budget.service");
 
 const create = asyncHandler(async (req, res) => {
@@ -44,9 +47,39 @@ const remove = asyncHandler(async (req, res) => {
   );
 });
 
+// Month Overall Budget Handlers
+const getMonthly = asyncHandler(async (req, res) => {
+  const { month, year } = req.query;
+  const monthlyBudgets = await getMonthlyBudgets(req.user.id, month, year);
+
+  return res.status(200).json(
+    new ApiResponse(200, "Monthly budgets fetched successfully", monthlyBudgets)
+  );
+});
+
+const setMonthly = asyncHandler(async (req, res) => {
+  const budget = await setMonthlyBudget(req.user.id, req.body);
+
+  return res.status(200).json(
+    new ApiResponse(200, "Monthly budget saved successfully", budget)
+  );
+});
+
+const removeMonthly = asyncHandler(async (req, res) => {
+  const { month, year } = req.query;
+  await deleteMonthlyBudget(req.user.id, { month, year });
+
+  return res.status(200).json(
+    new ApiResponse(200, "Monthly budget deleted successfully", null)
+  );
+});
+
 module.exports = {
   create,
   getAll,
   update,
   remove,
+  getMonthly,
+  setMonthly,
+  removeMonthly,
 };
