@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AuditProvider } from "./contexts/AuditContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./layouts/AppLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
@@ -22,17 +23,18 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: "#1e293b",
-              color: "#f1f5f9",
-              border: "1px solid #334155",
-            },
-          }}
-        />
-        <Routes>
+        <AuditProvider>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: "#1e293b",
+                color: "#f1f5f9",
+                border: "1px solid #334155",
+              },
+            }}
+          />
+          <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
           <Route element={<AuthLayout />}>
@@ -60,6 +62,7 @@ function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </AuditProvider>
       </BrowserRouter>
     </AuthProvider>
   );
