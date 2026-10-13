@@ -1,7 +1,7 @@
 const prisma = require("../../lib/prisma");
 const AppError = require("../../errors/AppError");
 
-const createCategory = async ({ name }) => {
+const createCategory = async ({ name, type = "EXPENSE" }) => {
   const existing = await prisma.category.findUnique({
     where: { name },
   });
@@ -11,7 +11,7 @@ const createCategory = async ({ name }) => {
   }
 
   const category = await prisma.category.create({
-    data: { name },
+    data: { name, type },
   });
 
   return category;

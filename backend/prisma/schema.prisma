@@ -39,8 +39,9 @@ model Account {
 }
 
 model Category {
-  id           String   @id @default(cuid())
-  name         String   @unique
+  id           String          @id @default(cuid())
+  name         String          @unique
+  type         TransactionType @default(EXPENSE)
 
   transactions Transaction[]
   budgets      Budget[]

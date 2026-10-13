@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { Trash2, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import type { Category } from "../../types/category";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -22,24 +22,38 @@ interface CategoryListItemProps {
 }
 
 export const CategoryListItem = ({ category, onDelete }: CategoryListItemProps) => {
-  const color = CATEGORY_COLORS[category.name] || "#f97316";
+  const isIncome =
+    category.type === "INCOME" ||
+    category.name === "Salary" ||
+    category.name === "Freelance";
+
+  const defaultColor = isIncome ? "#10b981" : "#f97316";
+  const color = CATEGORY_COLORS[category.name] || defaultColor;
 
   return (
     <div className="flex items-center justify-between rounded-xl border border-stone-200/90 bg-white px-4 py-3 shadow-2xs hover:shadow-xs transition-shadow">
       <div className="flex items-center gap-3">
         <div
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold text-white shadow-xs shrink-0"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold text-white shadow-xs shrink-0"
           style={{ backgroundColor: color }}
         >
           {category.name.slice(0, 2).toUpperCase()}
         </div>
         <div>
-          <span className="text-sm font-semibold text-stone-800">{category.name}</span>
-          <p className="text-[11px] text-stone-400">
-            {category.name === "Salary" || category.name === "Freelance"
-              ? "Income Category"
-              : "Expense Category"}
-          </p>
+          <span className="text-sm font-semibold text-stone-900">{category.name}</span>
+          <div className="flex items-center gap-1 mt-0.5">
+            {isIncome ? (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                <ArrowUpRight size={10} />
+                Income
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-medium text-stone-600">
+                <ArrowDownRight size={10} />
+                Expense
+              </span>
+            )}
+          </div>
         </div>
       </div>
       <button
