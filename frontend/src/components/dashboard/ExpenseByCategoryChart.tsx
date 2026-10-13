@@ -5,6 +5,7 @@ import {
   Cell,
   Tooltip,
   ResponsiveContainer,
+  Sector,
 } from "recharts";
 import { ChevronLeft, ChevronRight, Calendar, PieChart as PieIcon } from "lucide-react";
 import { Card } from "../ui/Card";
@@ -63,6 +64,7 @@ export const ExpenseByCategoryChart = ({
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [breakdown, setBreakdown] = useState<CategoryBreakdownResponse | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   // Sync initialData when parent dashboard loads
   useEffect(() => {
@@ -95,6 +97,7 @@ export const ExpenseByCategoryChart = ({
     targetYear?: number
   ) => {
     setIsFetching(true);
+    setActiveIndex(null);
     try {
       const res = await dashboardService.getCategoryBreakdown(
         targetMonth,
@@ -122,6 +125,18 @@ export const ExpenseByCategoryChart = ({
   const items = breakdown?.items || [];
   const totalAmount = breakdown?.total || 0;
 
+  // Active slice details for dynamic center display
+  const activeItem =
+    activeIndex !== null && items[activeIndex] ? items[activeIndex] : null;
+  const activePercent =
+    activeItem && totalAmount > 0
+      ? Math.round((activeItem.amount / totalAmount) * 100)
+      : 0;
+  const activeColor = activeItem
+    ? CATEGORY_COLORS[activeItem.category] ||
+      FALLBACK_COLORS[activeIndex! % FALLBACK_COLORS.length]
+    : undefined;
+
   // Active month index for previous/next arrows
   const activeMonthIndex = availableMonths.findIndex(
     (m) => m.month === selectedMonth && m.year === selectedYear
@@ -145,6 +160,47 @@ export const ExpenseByCategoryChart = ({
       const nextNewer = availableMonths[activeMonthIndex - 1];
       if (nextNewer) fetchMonthBreakdown(nextNewer.month, nextNewer.year);
     }
+  };
+
+  // Custom active sector animation that enlarges and pops outward with a soft ambient halo
+  const renderActiveShape = (props: any) => {
+    const {
+      cx,
+      cy,
+      innerRadius,
+      outerRadius,
+      startAngle,
+      endAngle,
+      fill,
+    } = props;
+
+    return (
+      <g style={{ pointerEvents: "none" }}>
+        {/* Soft atmospheric halo ring */}
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={outerRadius + 3}
+          outerRadius={outerRadius + 9}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+          opacity={0.24}
+        />
+        {/* Popped out enlarged slice */}
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius - 2}
+          outerRadius={outerRadius + 8}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+          stroke="#ffffff"
+          strokeWidth={3}
+        />
+      </g>
+    );
   };
 
   return (
@@ -265,11 +321,13 @@ export const ExpenseByCategoryChart = ({
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {/* Donut Chart with Centered Total */}
-          <div className="relative h-64 w-full">
+          {/* Donut Chart with Centered Dynamic Total / Hovered Category */}
+          <div className="relative h-64 w-full select-none">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart onMouseLeave={() => setActiveIndex(null)}>
                 <Pie
+                  activeIndex={activeIndex ?? undefined}
+                  activeShape={renderActiveShape}
                   data={items}
                   dataKey="amount"
                   nameKey="category"
@@ -277,15 +335,35 @@ export const ExpenseByCategoryChart = ({
                   cy="50%"
                   innerRadius={65}
                   outerRadius={92}
-                  paddingAngle={2}
+                  paddingAngle={3}
                   stroke="#ffffff"
                   strokeWidth={2}
+                  onMouseEnter={(_, index) => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                  isAnimationActive={true}
+                  animationDuration={500}
+                  animationEasing="ease-out"
+                  style={{ cursor: "pointer" }}
                 >
                   {items.map((entry, index) => {
                     const color =
                       CATEGORY_COLORS[entry.category] ||
                       FALLBACK_COLORS[index % FALLBACK_COLORS.length];
-                    return <Cell key={`cell-${index}`} fill={color} />;
+                    const isHovered = activeIndex === index;
+                    const isAnyHovered = activeIndex !== null;
+
+                    return (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={color}
+                        onMouseEnter={() => setActiveIndex(index)}
+                        style={{
+                          cursor: "pointer",
+                          transition: "opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+                          opacity: isAnyHovered && !isHovered ? 0.4 : 1,
+                        }}
+                      />
+                    );
                   })}
                 </Pie>
                 <Tooltip
@@ -304,23 +382,48 @@ export const ExpenseByCategoryChart = ({
               </PieChart>
             </ResponsiveContainer>
 
-            {/* Absolute Centered Total inside Donut */}
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[11px] font-medium text-stone-400 uppercase tracking-wider">
-                Total Spent
-              </span>
-              <span className="font-numeric text-lg font-bold text-stone-900 leading-tight">
-                {formatCurrency(totalAmount)}
-              </span>
-              <span className="text-[10px] text-stone-500 font-medium">
-                {selectedMonth === "all"
-                  ? "All Time"
-                  : `${monthName(selectedMonth as number).slice(0, 3)} ${selectedYear}`}
-              </span>
+            {/* Dynamic Centered Text inside Donut */}
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center transition-all duration-300">
+              {activeItem ? (
+                <div className="flex flex-col items-center justify-center text-center px-4 transition-all duration-200">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0 shadow-2xs"
+                      style={{ backgroundColor: activeColor }}
+                    />
+                    <span
+                      className="text-xs font-bold uppercase tracking-wider truncate max-w-[130px]"
+                      style={{ color: activeColor }}
+                    >
+                      {activeItem.category}
+                    </span>
+                  </div>
+                  <span className="font-numeric text-xl font-extrabold text-stone-900 leading-tight">
+                    {formatCurrency(activeItem.amount)}
+                  </span>
+                  <span className="text-[11px] font-semibold text-stone-500 mt-0.5">
+                    {activePercent}% of total
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center transition-all duration-200">
+                  <span className="text-[11px] font-medium text-stone-400 uppercase tracking-wider">
+                    Total Spent
+                  </span>
+                  <span className="font-numeric text-lg font-bold text-stone-900 leading-tight">
+                    {formatCurrency(totalAmount)}
+                  </span>
+                  <span className="text-[10px] text-stone-500 font-medium">
+                    {selectedMonth === "all"
+                      ? "All Time"
+                      : `${monthName(selectedMonth as number).slice(0, 3)} ${selectedYear}`}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Interactive Category Chips Breakdown */}
+          {/* Interactive Category Chips Breakdown synchronized with Pie Chart */}
           <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-2">
             {items.map((item, index) => {
               const color =
@@ -330,23 +433,47 @@ export const ExpenseByCategoryChart = ({
                 totalAmount > 0
                   ? Math.round((item.amount / totalAmount) * 100)
                   : 0;
+              const isSelected = activeIndex === index;
+              const isAnySelected = activeIndex !== null;
 
               return (
                 <div
                   key={item.category}
-                  className="flex items-center justify-between rounded-lg border border-stone-100 bg-stone-50/70 px-2.5 py-1.5 text-xs hover:bg-stone-100/80 transition-colors"
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                  className={cn(
+                    "flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none",
+                    isSelected
+                      ? "border-stone-400 bg-white shadow-xs scale-[1.03] ring-1 ring-stone-300 z-10"
+                      : isAnySelected
+                      ? "border-stone-100 bg-stone-50/50 opacity-45"
+                      : "border-stone-100 bg-stone-50/70 hover:bg-stone-100/90 hover:scale-[1.01]"
+                  )}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      className={cn(
+                        "h-2.5 w-2.5 shrink-0 rounded-full transition-transform duration-200",
+                        isSelected && "scale-125 shadow-xs"
+                      )}
                       style={{ backgroundColor: color }}
                     />
-                    <span className="truncate font-medium text-stone-800">
+                    <span
+                      className={cn(
+                        "truncate font-medium",
+                        isSelected ? "font-bold text-stone-950" : "text-stone-800"
+                      )}
+                    >
                       {item.category}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 font-numeric">
-                    <span className="font-semibold text-stone-900">
+                    <span
+                      className={cn(
+                        "font-semibold",
+                        isSelected ? "text-stone-950 font-bold" : "text-stone-900"
+                      )}
+                    >
                       {formatCurrency(item.amount)}
                     </span>
                     <span className="text-[10px] text-stone-500 font-medium">
