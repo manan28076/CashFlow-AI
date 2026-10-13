@@ -16,8 +16,7 @@ import { cn } from "../../utils/cn";
 
 const links = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { to: "/import", label: "Import Statement", icon: UploadCloud },
+  { to: "/transactions", label: "Transactions & Import", icon: ArrowLeftRight },
   { to: "/accounts", label: "Accounts & Categories", icon: Layers },
   { to: "/budget", label: "Budget", icon: PiggyBank },
   { to: "/ai-assistant", label: "AI Assistant", icon: Sparkles },

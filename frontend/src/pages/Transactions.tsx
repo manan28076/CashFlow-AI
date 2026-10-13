@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Plus } from "lucide-react";
+import { Plus, ArrowLeftRight } from "lucide-react";
 import { transactionService } from "../services/transaction.service";
 import { accountService } from "../services/account.service";
 import { categoryService } from "../services/category.service";
+import { StatementImportSection } from "../components/transactions/StatementImportSection";
 import { TransactionTable } from "../components/transactions/TransactionTable";
 import { TransactionFilters } from "../components/transactions/TransactionFilters";
 import { TransactionFormModal } from "../components/transactions/TransactionFormModal";
 import { Pagination } from "../components/transactions/Pagination";
 import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
 import { useDebounce } from "../hooks/useDebounce";
 import type {
   CreateTransactionPayload,
@@ -116,33 +118,56 @@ export const Transactions = () => {
     }
   };
 
+  const currentPage = filters.page ?? 1;
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-stone-900">Transactions</h1>
-          <p className="text-sm text-stone-500">All your income and expenses in one place</p>
+      {/* SECTION 1 (UPPER HALF / TOP): IMPORT STATEMENT (on first page) */}
+      {currentPage === 1 && (
+        <StatementImportSection onImportSuccess={loadTransactions} />
+      )}
+
+      {/* SECTION 2 (LOWER HALF / BELOW IT): TRANSACTIONS MANAGEMENT */}
+      <Card className="flex flex-col gap-5 border border-stone-200/90 bg-white p-5 sm:p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600 shadow-2xs">
+              <ArrowLeftRight size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-stone-900">All Transactions</h2>
+                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-600">
+                  Page {currentPage} of {totalPages || 1}
+                </span>
+              </div>
+              <p className="text-xs text-stone-500">
+                Filter, search, review, and manually manage income and expenses
+              </p>
+            </div>
+          </div>
+
+          <Button onClick={handleAdd} className="gap-2 font-medium self-start sm:self-auto">
+            <Plus size={16} />
+            Add Transaction
+          </Button>
         </div>
-        <Button onClick={handleAdd}>
-          <Plus size={16} />
-          Add Transaction
-        </Button>
-      </div>
 
-      <TransactionFilters filters={filters} onChange={setFilters} categories={categories} />
+        <TransactionFilters filters={filters} onChange={setFilters} categories={categories} />
 
-      <TransactionTable
-        transactions={transactions}
-        isLoading={isLoading}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+        <TransactionTable
+          transactions={transactions}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
 
-      <Pagination
-        page={filters.page ?? 1}
-        totalPages={totalPages}
-        onPageChange={(page) => setFilters({ ...filters, page })}
-      />
+        <Pagination
+          page={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setFilters({ ...filters, page })}
+        />
+      </Card>
 
       <TransactionFormModal
         isOpen={isModalOpen}
