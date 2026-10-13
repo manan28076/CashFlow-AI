@@ -6,57 +6,67 @@ const { parseGridStatement } = require("./parsers/excel.parser");
 const { askGeminiStructured } = require("../ai/services/gemini.service");
 const { safeParseJSON } = require("../ai/utils/jsonParser");
 
-// Known Indian merchant rule map
+// Known Indian merchant and narration rule map
 const MERCHANT_RULES = [
-  // Food & Dining / Groceries
+  // Food & Dining / Groceries / Quick Commerce
   { pattern: /\b(swiggy|instamart)\b/i, merchant: "Swiggy", category: "Food" },
   { pattern: /\b(zomato|blinkit)\b/i, merchant: "Zomato", category: "Food" },
   { pattern: /\b(zepto)\b/i, merchant: "Zepto", category: "Food" },
-  { pattern: /\b(bb daily|bigbasket)\b/i, merchant: "BigBasket", category: "Food" },
-  { pattern: /\b(mcdonalds|starbucks|dominos|pizza hut|kfc|burger king|chaayos|chai point|tea|coffee|cafe|dhaba|baker|bakery|restaurant)\b/i, merchant: "Food & Dining", category: "Food" },
+  { pattern: /\b(bb daily|bigbasket|grofers)\b/i, merchant: "BigBasket", category: "Food" },
+  { pattern: /\b(dmart|d-mart|avenue supermarts|smart bazaar|reliance fresh|nature basket|more retail|spencer|spencers|supermarket|kirana|provision)\b/i, merchant: "Supermarket / Grocery", category: "Food" },
+  { pattern: /\b(mcdonalds|starbucks|dominos|pizza hut|kfc|burger king|chaayos|chai point|subway|haldiram|bikanervala|barbeque nation|faasos|eatclub|behrouz|ovenstory|costa coffee|third wave|cafe coffee day|tea|chai|coffee|cafe|dhaba|baker|bakery|restaurant|dining|kitchen|canteen|sweet|sweets|mithai|mess|tiffin|snack)\b/i, merchant: "Food & Dining", category: "Food" },
 
-  // Transport & Travel
+  // Transport & Travel & Fuel
   { pattern: /\b(uber)\b/i, merchant: "Uber", category: "Travel" },
   { pattern: /\b(ola)\b/i, merchant: "Ola", category: "Travel" },
-  { pattern: /\b(rapido)\b/i, merchant: "Rapido", category: "Travel" },
-  { pattern: /\b(irctc|indian railways|railway)\b/i, merchant: "IRCTC", category: "Travel" },
-  { pattern: /\b(makemytrip|goibibo|ixigo|easemytrip|yatra|indigo|air india|akasa|spicejet)\b/i, merchant: "Flight/Travel", category: "Travel" },
-  { pattern: /\b(fuel|petrol|diesel|cng|hpcl|bpcl|iocl|indian oil|shell)\b/i, merchant: "Fuel / Petrol", category: "Travel" },
+  { pattern: /\b(rapido|namma yatri)\b/i, merchant: "Rapido / Auto", category: "Travel" },
+  { pattern: /\b(irctc|indian railways|railway|rail)\b/i, merchant: "IRCTC / Railways", category: "Travel" },
+  { pattern: /\b(makemytrip|goibibo|ixigo|easemytrip|yatra|redbus|abhibus|cleartrip)\b/i, merchant: "Travel Booking", category: "Travel" },
+  { pattern: /\b(indigo|air india|akasa|spicejet|airasia|vistara)\b/i, merchant: "Airlines", category: "Travel" },
+  { pattern: /\b(fuel|petrol|diesel|cng|hpcl|bpcl|iocl|indian oil|bharat petroleum|hindustan petroleum|shell)\b/i, merchant: "Fuel / Petrol", category: "Travel" },
+  { pattern: /\b(fastag|toll|tollway|metro|dmrc|bmrc|parking|cab|taxi|auto)\b/i, merchant: "Transit & Toll", category: "Travel" },
 
-  // Housing & Rent (mapped to Bills if Rent doesn't exist)
-  { pattern: /(?:^|[\s/_-])(rent|houserent|house\s*rent|pg\s*rent|flat\s*rent|maintenance|society|maintenance\s*charge|landlord)(?:$|[\s/_-])/i, merchant: "House Rent / Maintenance", category: "Bills" },
-  { pattern: /\b(nobroker|magicbricks|nestaway|housing\.com)\b/i, merchant: "House Rent", category: "Bills" },
+  // Housing & Rent & Maintenance
+  { pattern: /(?:^|[\s/_-])(rent|houserent|house\s*rent|pg\s*rent|flat\s*rent|room\s*rent|hostel|maintenance|society|maintenance\s*charge|landlord|builder)(?:$|[\s/_-])/i, merchant: "Rent & Society Maintenance", category: "Bills" },
+  { pattern: /\b(nobroker|magicbricks|nestaway|housing\.com|mygate|apnacomplex|nobrokerhood)\b/i, merchant: "House Rent / Community", category: "Bills" },
 
-  // Shopping & Ecommerce
+  // Utilities & Telecom & Bills
+  { pattern: /\b(airtel)\b/i, merchant: "Airtel", category: "Bills" },
+  { pattern: /\b(jio|reliance jio)\b/i, merchant: "Jio", category: "Bills" },
+  { pattern: /\b(vodafone|vi prepaid|vi postpaid|bsnl|mtnl)\b/i, merchant: "Telecom Bill", category: "Bills" },
+  { pattern: /\b(bescom|cesc|tata power|mahadiscom|electricity|torrent power|adani electricity|tneb|mseb|uppcl|bses|dhbvn|power|bijli)\b/i, merchant: "Electricity Bill", category: "Bills" },
+  { pattern: /\b(igl|mgl|indane|bharat gas|hp gas|gas|gas bill|mahanagar gas|indraprastha gas)\b/i, merchant: "Gas Utility", category: "Bills" },
+  { pattern: /\b(water|water bill|jal board|property tax|municipal)\b/i, merchant: "Municipal & Water", category: "Bills" },
+  { pattern: /\b(act fibernet|act corp|hathway|spectra|airtel xstream|jiofiber|broadband|wifi)\b/i, merchant: "Broadband Internet", category: "Bills" },
+  { pattern: /\b(tata play|dish tv|sun direct|dth|recharge|postpaid|billdesk|bbps)\b/i, merchant: "Utility / DTH", category: "Bills" },
+
+  // Shopping & Ecommerce & Retail
   { pattern: /\b(amazon|amzn)\b/i, merchant: "Amazon", category: "Shopping" },
   { pattern: /\b(flipkart)\b/i, merchant: "Flipkart", category: "Shopping" },
   { pattern: /\b(myntra)\b/i, merchant: "Myntra", category: "Shopping" },
-  { pattern: /\b(ajio|nykaa|tata cliq|meesho|zara|h&m|decathlon)\b/i, merchant: "Shopping", category: "Shopping" },
+  { pattern: /\b(ajio|nykaa|purplle|tata cliq|meesho|snapdeal)\b/i, merchant: "Online Shopping", category: "Shopping" },
+  { pattern: /\b(croma|reliance digital|vijay sales|poorvika|sangeetha)\b/i, merchant: "Electronics Retail", category: "Shopping" },
+  { pattern: /\b(ikea|home centre|pepperfry|urban ladder)\b/i, merchant: "Furniture / Home", category: "Shopping" },
+  { pattern: /\b(zara|h&m|uniqlo|decathlon|lenskart|titan|westside|pantaloons|shoppers stop|max fashion|marks & spencer|urbanic|snitch|bewakoof|fabindia)\b/i, merchant: "Fashion & Lifestyle", category: "Shopping" },
 
   // Entertainment & Subscriptions
   { pattern: /\b(netflix)\b/i, merchant: "Netflix", category: "Entertainment" },
   { pattern: /\b(spotify)\b/i, merchant: "Spotify", category: "Entertainment" },
-  { pattern: /\b(hotstar|disney|prime video|youtube|apple\.com|apple bill|pvr|inox|bookmyshow)\b/i, merchant: "Digital Subscription", category: "Entertainment" },
-
-  // Utilities & Telecom & Household Bills
-  { pattern: /\b(airtel)\b/i, merchant: "Airtel", category: "Bills" },
-  { pattern: /\b(jio|reliance jio)\b/i, merchant: "Jio", category: "Bills" },
-  { pattern: /\b(vodafone|vi prepaid|vi postpaid)\b/i, merchant: "Vi Telecom", category: "Bills" },
-  { pattern: /\b(bescom|cesc|tata power|mahadiscom|electricity|torrent power|adani electricity|power)\b/i, merchant: "Electricity Bill", category: "Bills" },
-  { pattern: /\b(igl|mgl|indane|bharat gas|hp gas|gas)\b/i, merchant: "Gas Utility", category: "Bills" },
-  { pattern: /\b(water|recharge|dth|broadband|wifi)\b/i, merchant: "Utility Bill", category: "Bills" },
+  { pattern: /\b(hotstar|disney|prime video|amazon prime|youtube|apple\.com|apple bill|apple music|google play|google one)\b/i, merchant: "Digital Subscription", category: "Entertainment" },
+  { pattern: /\b(bookmyshow|pvr|inox|cinepolis|movie|cinema|sonyliv|zee5|aha|sun nxt|jiocinema|playstation|steam|xbox|audible|kindle)\b/i, merchant: "Entertainment & Media", category: "Entertainment" },
 
   // Investments & Financial Services
   { pattern: /\b(zerodha|kite)\b/i, merchant: "Zerodha", category: "Investment" },
   { pattern: /\b(groww)\b/i, merchant: "Groww", category: "Investment" },
-  { pattern: /\b(angel one|upstox|indmoney|kuvera|mutual fund|sip|mf)\b/i, merchant: "Investment / Stocks", category: "Investment" },
+  { pattern: /\b(angel one|upstox|indmoney|kuvera|etmoney|coin|mutual fund|sip|ppf|nps|uti|hdfc amc|sbi mutual|axis mutual|nippon|icici pru|parag parikh|ppfas|mirae|mf)\b/i, merchant: "Investment / Mutual Funds", category: "Investment" },
+  { pattern: /\b(lic|hdfc life|max life|sbi life|icici lombard|star health|insurance|premium)\b/i, merchant: "Insurance", category: "Investment" },
 
-  // Healthcare
-  { pattern: /\b(apollo pharmacy|1mg|tata 1mg|pharmeasy|netmeds|medplus|clinic|hospital|doctor|dentist|pharmacy|medical)\b/i, merchant: "Healthcare / Medical", category: "Healthcare" },
+  // Healthcare & Wellness
+  { pattern: /\b(apollo pharmacy|apollo 247|1mg|tata 1mg|pharmeasy|netmeds|medplus|practo|clinikk|cult\.fit|cultfit|curefit|gym|fitness|clinic|hospital|doctor|dentist|dental|pharmacy|chemist|diagnostic|dr lal|metropolis|srl|thyrocare|pathology|medical|health)\b/i, merchant: "Healthcare / Medical", category: "Healthcare" },
 
   // Salary & Income
-  { pattern: /\b(salary|payroll|wages|stipend)\b/i, merchant: "Employer Salary", category: "Salary" },
-  { pattern: /\b(interest|dividend|cashback|refund)\b/i, merchant: "Interest / Refund", category: "Other" },
+  { pattern: /\b(salary|payroll|wages|stipend|payout|bonus|incentive|remuneration)\b/i, merchant: "Salary & Payout", category: "Salary" },
+  { pattern: /\b(dividend|interest credit|bank interest|fd interest|cashback|refund|rebate)\b/i, merchant: "Income / Refund", category: "Other" },
 ];
 
 /**
@@ -198,12 +208,58 @@ const parseStatementFile = async ({ buffer, originalname, mimetype }, userId, ta
     throw new AppError("Zero valid financial transactions could be parsed from this file.", 400);
   }
 
-  // 4. Categorize rows: Regex rules first, then batch remaining unknown items to Gemini
+  // 3.5. Load user's historical categorizations for instant 0ms personalized memory matching
+  const pastTransactions = await prisma.transaction.findMany({
+    where: {
+      account: { userId },
+      categoryId: { not: null },
+    },
+    select: {
+      merchant: true,
+      description: true,
+      categoryId: true,
+      category: { select: { id: true, name: true } },
+    },
+    take: 500,
+    orderBy: { createdAt: "desc" },
+  });
+
+  const memoryMap = new Map();
+  for (const past of pastTransactions) {
+    if (past.category) {
+      if (past.merchant) {
+        memoryMap.set(past.merchant.toLowerCase().trim(), {
+          id: past.categoryId,
+          name: past.category.name,
+        });
+      }
+      if (past.description) {
+        memoryMap.set(past.description.toLowerCase().trim(), {
+          id: past.categoryId,
+          name: past.category.name,
+        });
+      }
+    }
+  }
+
+  // 4. Categorize rows: User memory first, then comprehensive regex rules, then Gemini batch for remaining unknowns
   const categoryNames = categories.map((c) => c.name);
   const unassignedRows = [];
 
   for (let i = 0; i < normalizedRows.length; i++) {
     const row = normalizedRows[i];
+    const merchantKey = (row.merchant || "").toLowerCase().trim();
+    const descKey = (row.description || "").toLowerCase().trim();
+
+    // Check 1: User's historical personal category memory (0 ms)
+    const memMatch = memoryMap.get(merchantKey) || memoryMap.get(descKey);
+    if (memMatch) {
+      row.categoryId = memMatch.id;
+      row.categoryName = memMatch.name;
+      continue;
+    }
+
+    // Check 2: Comprehensive Indian merchant & narration rules (0 ms)
     let matchedCatName = null;
     const textToMatch = `${row.rawDescription} ${row.merchant} ${row.description}`.toLowerCase();
 
