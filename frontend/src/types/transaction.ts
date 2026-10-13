@@ -28,9 +28,33 @@ export interface CreateTransactionPayload {
   note?: string;
   description: string;
   date: string;
+  allowDuplicate?: boolean;
 }
 
 export type UpdateTransactionPayload = Partial<CreateTransactionPayload>;
+
+export interface DuplicateGroup {
+  groupKey: string;
+  date: string;
+  amount: number;
+  type: TransactionType;
+  description: string;
+  merchant?: string | null;
+  categoryName: string;
+  accountName: string;
+  transactions: Transaction[];
+}
+
+export interface DuplicateScanResult {
+  totalDuplicateGroups: number;
+  totalRedundantTransactions: number;
+  groups: DuplicateGroup[];
+}
+
+export interface ResolveDuplicatesPayload {
+  action: "clean_all" | "delete_ids";
+  idsToDelete?: string[];
+}
 
 export interface TransactionQueryParams {
   search?: string;

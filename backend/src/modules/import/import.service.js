@@ -5,6 +5,7 @@ const { parsePdfStatement } = require("./parsers/pdf.parser");
 const { parseGridStatement } = require("./parsers/excel.parser");
 const { askGeminiStructured } = require("../ai/services/gemini.service");
 const { safeParseJSON } = require("../ai/utils/jsonParser");
+const { computeTransactionHash } = require("../transaction/utils/hash");
 
 // Known Indian merchant and narration rule map
 const MERCHANT_RULES = [
@@ -94,18 +95,6 @@ const cleanUpiNarration = (raw) => {
   s = s.replace(/^(NEFT|RTGS|IMPS|POS|ACH|NACH|UPI)[-/\s]+/i, "");
   s = s.replace(/[-/]\d{6,}$/, ""); // remove trailing transaction/ref numbers
   return s.trim() || raw;
-};
-
-/**
- * Compute sha256 hash for deduplication:
- * sha256(date|amount|type|lowercased description|occurrence-number)
- */
-const computeTransactionHash = (dateStr, amount, type, description, occurrence = 1) => {
-  const normDate = new Date(dateStr).toISOString().split("T")[0];
-  const normDesc = (description || "").toLowerCase().trim();
-  const normAmt = Number(amount).toFixed(2);
-  const payload = `${normDate}|${normAmt}|${type}|${normDesc}|${occurrence}`;
-  return crypto.createHash("sha256").update(payload).digest("hex");
 };
 
 /**

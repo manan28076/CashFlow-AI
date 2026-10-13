@@ -25,9 +25,16 @@ api.interceptors.response.use(
         window.location.href = "/login";
       }
     }
+    const data = error.response?.data as any;
     const message =
-      error.response?.data?.message || error.message || "Something went wrong";
-    return Promise.reject(new Error(message));
+      data?.message || error.message || "Something went wrong";
+    const enhancedError = new Error(message) as any;
+    enhancedError.status = error.response?.status;
+    enhancedError.statusCode = error.response?.status;
+    enhancedError.isDuplicate = Boolean(data?.isDuplicate || error.response?.status === 409);
+    enhancedError.duplicateDetails = data?.duplicateDetails;
+    enhancedError.response = error.response;
+    return Promise.reject(enhancedError);
   }
 );
 

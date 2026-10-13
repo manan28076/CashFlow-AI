@@ -8,12 +8,14 @@ import { StatementImportSection } from "../components/transactions/StatementImpo
 import { TransactionTable } from "../components/transactions/TransactionTable";
 import { TransactionFilters } from "../components/transactions/TransactionFilters";
 import { TransactionFormModal } from "../components/transactions/TransactionFormModal";
+import { DuplicateManagerBanner } from "../components/transactions/DuplicateManagerBanner";
 import { Pagination } from "../components/transactions/Pagination";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useDebounce } from "../hooks/useDebounce";
 import type {
   CreateTransactionPayload,
+  DuplicateScanResult,
   Transaction,
   TransactionQueryParams,
 } from "../types/transaction";
@@ -34,6 +36,8 @@ export const Transactions = () => {
     sortBy: "date",
     sortOrder: "desc",
   });
+  const [duplicates, setDuplicates] = useState<DuplicateScanResult | null>(null);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
 
   const debouncedSearch = useDebounce(filters.search, 400);
 
@@ -47,6 +51,18 @@ export const Transactions = () => {
       setCategories(cats);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load form data");
+    }
+  };
+
+  const loadDuplicates = async () => {
+    setIsCheckingDuplicates(true);
+    try {
+      const data = await transactionService.getDuplicates();
+      setDuplicates(data);
+    } catch {
+      // non-critical error, fail gracefully
+    } finally {
+      setIsCheckingDuplicates(false);
     }
   };
 
@@ -68,6 +84,7 @@ export const Transactions = () => {
 
   useEffect(() => {
     loadMeta();
+    loadDuplicates();
   }, []);
 
   useEffect(() => {
@@ -93,18 +110,15 @@ export const Transactions = () => {
   };
 
   const handleSubmit = async (payload: CreateTransactionPayload) => {
-    try {
-      if (editingTransaction) {
-        await transactionService.update(editingTransaction.id, payload);
-        toast.success("Transaction updated");
-      } else {
-        await transactionService.create(payload);
-        toast.success("Transaction added");
-      }
-      await loadTransactions();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    if (editingTransaction) {
+      await transactionService.update(editingTransaction.id, payload);
+      toast.success("Transaction updated");
+    } else {
+      await transactionService.create(payload);
+      toast.success("Transaction added");
     }
+    await loadTransactions();
+    await loadDuplicates();
   };
 
   const handleDelete = async (id: string) => {
@@ -113,6 +127,7 @@ export const Transactions = () => {
       await transactionService.remove(id);
       toast.success("Transaction deleted");
       await loadTransactions();
+      await loadDuplicates();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete transaction");
     }
@@ -122,9 +137,24 @@ export const Transactions = () => {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* DUPLICATE TRANSACTIONS BANNER & RESOLVER */}
+      <DuplicateManagerBanner
+        duplicates={duplicates}
+        onResolved={() => {
+          loadTransactions();
+          loadDuplicates();
+        }}
+        isLoading={isCheckingDuplicates}
+      />
+
       {/* SECTION 1 (UPPER HALF / TOP): IMPORT STATEMENT (on first page) */}
       {currentPage === 1 && (
-        <StatementImportSection onImportSuccess={loadTransactions} />
+        <StatementImportSection
+          onImportSuccess={() => {
+            loadTransactions();
+            loadDuplicates();
+          }}
+        />
       )}
 
       {/* SECTION 2 (LOWER HALF / BELOW IT): TRANSACTIONS MANAGEMENT */}

@@ -9,6 +9,7 @@ const createTransactionSchema = z.object({
   note: z.string().optional(),
   description: z.string().min(1, "Description is required"),
   date: z.string(),
+  allowDuplicate: z.boolean().optional().default(false),
 });
 
 const updateTransactionSchema = createTransactionSchema.partial();

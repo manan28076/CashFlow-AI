@@ -1,6 +1,6 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Sparkles, Mic, PlusCircle, Check, Loader2 } from "lucide-react";
+import { Sparkles, Mic, PlusCircle, Check, Loader2, AlertTriangle } from "lucide-react";
 import api from "../../services/api";
 import { transactionService } from "../../services/transaction.service";
 import { accountService } from "../../services/account.service";
@@ -25,6 +25,7 @@ export const QuickAddBox = ({ onTransactionAdded }: QuickAddBoxProps) => {
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [parsedTx, setParsedTx] = useState<ParsedQuickTx | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
 
   const handleSpeech = () => {
@@ -70,6 +71,7 @@ export const QuickAddBox = ({ onTransactionAdded }: QuickAddBoxProps) => {
 
     setIsParsing(true);
     setParsedTx(null);
+    setDuplicateWarning(null);
     try {
       const res = await api.post<ApiResponse<ParsedQuickTx>>("/ai/quick-add", { text: query });
       setParsedTx(res.data.data);
@@ -80,7 +82,7 @@ export const QuickAddBox = ({ onTransactionAdded }: QuickAddBoxProps) => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (overrideAllowDuplicate = false) => {
     if (!parsedTx) return;
 
     setIsSaving(true);
@@ -104,14 +106,23 @@ export const QuickAddBox = ({ onTransactionAdded }: QuickAddBoxProps) => {
         merchant: parsedTx.description,
         description: parsedTx.description,
         date: parsedTx.date,
+        allowDuplicate: overrideAllowDuplicate,
       });
 
       toast.success(`Saved ₹${parsedTx.amount} (${parsedTx.description})!`);
       setText("");
       setParsedTx(null);
+      setDuplicateWarning(null);
       onTransactionAdded();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save transaction");
+    } catch (err: any) {
+      if (err?.isDuplicate || err?.status === 409) {
+        setDuplicateWarning(
+          err.message ||
+            `An identical transaction for ₹${parsedTx.amount} on ${parsedTx.date} already exists in your account.`
+        );
+      } else {
+        toast.error(err instanceof Error ? err.message : "Failed to save transaction");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -188,19 +199,59 @@ export const QuickAddBox = ({ onTransactionAdded }: QuickAddBoxProps) => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setParsedTx(null)}
+                onClick={() => {
+                  setParsedTx(null);
+                  setDuplicateWarning(null);
+                }}
                 className="text-stone-500 hover:text-stone-700"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleSave}
+                onClick={() => handleSave(false)}
                 disabled={isSaving}
                 className="flex items-center gap-1 rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-800 disabled:opacity-50"
               >
                 {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
                 Confirm & Save
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Duplicate Conflict Warning Box */}
+        {duplicateWarning && parsedTx && (
+          <div className="flex flex-col gap-2.5 rounded-xl border border-amber-300 bg-amber-50/95 p-3.5 text-xs text-amber-950 shadow-xs animate-in fade-in">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <span className="font-bold text-amber-900 text-sm">Duplicate Detected</span>
+                <p className="text-amber-900/90 leading-relaxed">{duplicateWarning}</p>
+                <p className="font-semibold text-amber-950 pt-0.5">
+                  Is this a separate transaction or did you accidentally submit twice?
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-1 border-t border-amber-200/80">
+              <button
+                type="button"
+                onClick={() => {
+                  setDuplicateWarning(null);
+                  setParsedTx(null);
+                  setText("");
+                }}
+                className="rounded-lg px-2.5 py-1.5 text-stone-600 hover:bg-amber-100 text-xs font-medium transition-colors"
+              >
+                Cancel / Same One
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSave(true)}
+                disabled={isSaving}
+                className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 transition-colors shadow-2xs disabled:opacity-50"
+              >
+                {isSaving ? "Saving..." : "Yes, Add as New"}
               </button>
             </div>
           </div>

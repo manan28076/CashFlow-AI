@@ -2,7 +2,9 @@ import api from "./api";
 import type { ApiResponse } from "../types/api";
 import type {
   CreateTransactionPayload,
+  DuplicateScanResult,
   PaginatedTransactions,
+  ResolveDuplicatesPayload,
   Transaction,
   TransactionQueryParams,
   UpdateTransactionPayload,
@@ -13,6 +15,21 @@ export const transactionService = {
     const res = await api.get<ApiResponse<PaginatedTransactions>>(
       "/transactions",
       { params }
+    );
+    return res.data.data;
+  },
+
+  getDuplicates: async () => {
+    const res = await api.get<ApiResponse<DuplicateScanResult>>(
+      "/transactions/duplicates"
+    );
+    return res.data.data;
+  },
+
+  resolveDuplicates: async (payload: ResolveDuplicatesPayload) => {
+    const res = await api.post<ApiResponse<{ deletedCount: number; message: string }>>(
+      "/transactions/duplicates/resolve",
+      payload
     );
     return res.data.data;
   },
