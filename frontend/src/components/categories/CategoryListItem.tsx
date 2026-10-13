@@ -1,5 +1,20 @@
-import { Tag, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type { Category } from "../../types/category";
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Food: "#06b6d4",
+  Shopping: "#ef4444",
+  Transfer: "#10b981",
+  Entertainment: "#f59e0b",
+  Bills: "#8b5cf6",
+  Healthcare: "#ec4899",
+  Travel: "#f97316",
+  Education: "#6366f1",
+  Investment: "#14b8a6",
+  Salary: "#22c55e",
+  Freelance: "#10b981",
+  Other: "#64748b",
+};
 
 interface CategoryListItemProps {
   category: Category;
@@ -7,16 +22,31 @@ interface CategoryListItemProps {
 }
 
 export const CategoryListItem = ({ category, onDelete }: CategoryListItemProps) => {
+  const color = CATEGORY_COLORS[category.name] || "#f97316";
+
   return (
-    <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-white px-4 py-3">
+    <div className="flex items-center justify-between rounded-xl border border-stone-200/90 bg-white px-4 py-3 shadow-2xs hover:shadow-xs transition-shadow">
       <div className="flex items-center gap-3">
-        <Tag size={16} className="text-orange-600" />
-        <span className="text-sm font-medium text-stone-800">{category.name}</span>
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold text-white shadow-xs shrink-0"
+          style={{ backgroundColor: color }}
+        >
+          {category.name.slice(0, 2).toUpperCase()}
+        </div>
+        <div>
+          <span className="text-sm font-semibold text-stone-800">{category.name}</span>
+          <p className="text-[11px] text-stone-400">
+            {category.name === "Salary" || category.name === "Freelance"
+              ? "Income Category"
+              : "Expense Category"}
+          </p>
+        </div>
       </div>
       <button
         onClick={onDelete}
-        className="rounded-md p-1.5 text-stone-500 hover:bg-red-600/15 hover:text-red-600"
+        className="rounded-lg p-1.5 text-stone-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
         aria-label="Delete category"
+        title="Delete category"
       >
         <Trash2 size={16} />
       </button>

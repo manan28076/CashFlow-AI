@@ -10,30 +10,32 @@ interface AccountCardProps {
 
 export const AccountCard = ({ account, onEdit, onDelete }: AccountCardProps) => {
   return (
-    <Card className="flex items-start justify-between gap-3">
-      <div className="flex items-start gap-3">
-        <div className="rounded-lg bg-orange-50 p-2 text-orange-600">
+    <Card className="flex items-center justify-between gap-3 border border-stone-200/90 p-4 shadow-2xs hover:shadow-xs transition-shadow">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600 shrink-0">
           <Building2 size={20} />
         </div>
         <div>
-          <p className="font-medium text-stone-900">{account.name}</p>
-          <p className="text-sm text-stone-500">{account.bankName}</p>
+          <p className="text-sm font-semibold text-stone-900">{account.name}</p>
+          <p className="text-xs text-stone-500">{account.bankName}</p>
         </div>
       </div>
-      <div className="flex gap-1">
+      <div className="flex items-center gap-1">
         <button
           onClick={onEdit}
-          className="rounded-md p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+          className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-800 transition-colors cursor-pointer"
           aria-label="Edit account"
+          title="Edit account"
         >
-          <Pencil size={16} />
+          <Pencil size={15} />
         </button>
         <button
           onClick={onDelete}
-          className="rounded-md p-1.5 text-stone-500 hover:bg-red-600/15 hover:text-red-600"
+          className="rounded-lg p-1.5 text-stone-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
           aria-label="Delete account"
+          title="Delete account"
         >
-          <Trash2 size={16} />
+          <Trash2 size={15} />
         </button>
       </div>
     </Card>
