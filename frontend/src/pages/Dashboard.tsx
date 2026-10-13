@@ -10,12 +10,12 @@ import { IncomeExpenseChart } from "../components/dashboard/IncomeExpenseChart";
 import { SpendingTrendChart } from "../components/dashboard/SpendingTrendChart";
 import { QuickAddBox } from "../components/dashboard/QuickAddBox";
 import { Button } from "../components/ui/Button";
-import type { DashboardSummary, CategoryBreakdownItem, MonthlyTrendItem } from "../types/dashboard";
+import type { DashboardSummary, CategoryBreakdownResponse, MonthlyTrendItem } from "../types/dashboard";
 import type { Budget } from "../types/budget";
 
 export const Dashboard = () => {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [categoryData, setCategoryData] = useState<CategoryBreakdownItem[]>([]);
+  const [categoryData, setCategoryData] = useState<CategoryBreakdownResponse | null>(null);
   const [trendData, setTrendData] = useState<MonthlyTrendItem[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,7 +90,7 @@ export const Dashboard = () => {
       <SummaryCards summary={summary} isLoading={isLoading} budgetStatus={budgetStatus} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ExpenseByCategoryChart data={categoryData} isLoading={isLoading} />
+        <ExpenseByCategoryChart initialData={categoryData} isLoading={isLoading} />
         <IncomeExpenseChart data={trendData} isLoading={isLoading} />
       </div>
 

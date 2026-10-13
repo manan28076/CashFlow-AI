@@ -20,7 +20,8 @@ const summary = asyncHandler(async (req, res) => {
   );
 });
 const categoryBreakdown = asyncHandler(async (req, res) => {
-  const data = await getCategoryBreakdown(req.user.id);
+  const { month, year } = req.query;
+  const data = await getCategoryBreakdown(req.user.id, month, year);
 
   return res.status(200).json(
     new ApiResponse(

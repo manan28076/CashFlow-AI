@@ -2,6 +2,7 @@ import api from "./api";
 import type { ApiResponse } from "../types/api";
 import type {
   CategoryBreakdownItem,
+  CategoryBreakdownResponse,
   DashboardSummary,
   MonthlyTrendItem,
 } from "../types/dashboard";
@@ -15,9 +16,12 @@ export const dashboardService = {
     return res.data.data;
   },
 
-  getCategoryBreakdown: async () => {
-    const res = await api.get<ApiResponse<CategoryBreakdownItem[]>>(
-      "/dashboard/category-breakdown"
+  getCategoryBreakdown: async (month?: number | string, year?: number) => {
+    const res = await api.get<ApiResponse<CategoryBreakdownResponse>>(
+      "/dashboard/category-breakdown",
+      {
+        params: { month, year },
+      }
     );
     return res.data.data;
   },

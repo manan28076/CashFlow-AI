@@ -67,7 +67,7 @@ const getSummary = async (userId) => {
     currentMonthSpending,
   };
 };
-const getCategoryBreakdown = async (userId) => {
+const getCategoryBreakdown = async (userId, month, year) => {
   const accounts = await prisma.account.findMany({
     where: {
       userId,
@@ -79,14 +79,69 @@ const getCategoryBreakdown = async (userId) => {
 
   const accountIds = accounts.map((account) => account.id);
 
-  const breakdown = await prisma.transaction.groupBy({
-    by: ["categoryId"],
+  // Discover all months with expense transactions for this user
+  const allExpenseTxs = await prisma.transaction.findMany({
     where: {
-      accountId: {
-        in: accountIds,
-      },
+      accountId: { in: accountIds },
       type: "EXPENSE",
     },
+    select: { date: true },
+    orderBy: { date: "desc" },
+  });
+
+  const now = new Date();
+  const curMonth = now.getMonth() + 1;
+  const curYear = now.getFullYear();
+
+  const monthMap = new Map();
+  // Always include current month
+  monthMap.set(`${curYear}-${curMonth}`, {
+    year: curYear,
+    month: curMonth,
+  });
+
+  allExpenseTxs.forEach((t) => {
+    const y = t.date.getFullYear();
+    const m = t.date.getMonth() + 1;
+    monthMap.set(`${y}-${m}`, { year: y, month: m });
+  });
+
+  const availableMonths = Array.from(monthMap.values()).sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year;
+    return b.month - a.month;
+  });
+
+  const where = {
+    accountId: {
+      in: accountIds,
+    },
+    type: "EXPENSE",
+  };
+
+  let selectedMonth = null;
+  let selectedYear = null;
+
+  if (month === "all") {
+    selectedMonth = null;
+    selectedYear = null;
+  } else if (month && year) {
+    selectedMonth = Number(month);
+    selectedYear = Number(year);
+  } else {
+    // Default to current month
+    selectedMonth = curMonth;
+    selectedYear = curYear;
+  }
+
+  if (selectedMonth && selectedYear) {
+    const start = new Date(selectedYear, selectedMonth - 1, 1);
+    const end = new Date(selectedYear, selectedMonth, 1);
+    where.date = { gte: start, lt: end };
+  }
+
+  const breakdown = await prisma.transaction.groupBy({
+    by: ["categoryId"],
+    where,
     _sum: {
       amount: true,
     },
@@ -94,18 +149,28 @@ const getCategoryBreakdown = async (userId) => {
 
   const categories = await prisma.category.findMany();
 
-  const result = breakdown.map((item) => {
-    const category = categories.find(
-      (category) => category.id === item.categoryId
-    );
+  const items = breakdown
+    .map((item) => {
+      const category = categories.find(
+        (category) => category.id === item.categoryId
+      );
 
-    return {
-      category: category ? category.name : "Unknown",
-      amount: item._sum.amount,
-    };
-  });
+      return {
+        category: category ? category.name : "Unknown",
+        amount: item._sum.amount,
+      };
+    })
+    .sort((a, b) => (b.amount || 0) - (a.amount || 0));
 
-  return result;
+  const total = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+  return {
+    items,
+    total,
+    selectedMonth,
+    selectedYear,
+    availableMonths,
+  };
 };
 const getRecentTransactions = async (userId) => {
   const accounts = await prisma.account.findMany({
