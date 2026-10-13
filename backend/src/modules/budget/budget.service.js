@@ -67,50 +67,48 @@ const getBudgets = async (userId, month, year) => {
     orderBy: [{ year: "desc" }, { month: "desc" }],
   });
 
-  if (explicitBudgets.length === 0) {
-    return [];
-  }
+  const categories = await prisma.category.findMany({
+    where: { name: { notIn: ["Salary", "Freelance"] } },
+  });
 
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
 
   // Group configured categories and their budgets
-  const catMap = new Map();
+  const catConfigMap = new Map();
   for (const b of explicitBudgets) {
-    if (!catMap.has(b.categoryId)) {
-      catMap.set(b.categoryId, {
+    if (!catConfigMap.has(b.categoryId)) {
+      catConfigMap.set(b.categoryId, {
         latestAmount: b.amount,
         category: b.category,
         months: new Map(),
       });
     }
-    catMap.get(b.categoryId).months.set(`${b.year}-${b.month}`, b);
+    catConfigMap.get(b.categoryId).months.set(`${b.year}-${b.month}`, b);
+  }
+
+  // Find all distinct months where expense transactions exist for this user
+  const allTxs = await prisma.transaction.findMany({
+    where: {
+      account: { userId },
+      type: "EXPENSE",
+    },
+    select: { date: true },
+  });
+
+  const monthKeys = new Set([`${currentYear}-${currentMonth}`]);
+  for (const b of explicitBudgets) {
+    monthKeys.add(`${b.year}-${b.month}`);
+  }
+  for (const t of allTxs) {
+    monthKeys.add(`${t.date.getFullYear()}-${t.date.getMonth() + 1}`);
   }
 
   const allBudgets = [];
 
-  for (const [catId, { latestAmount, category, months }] of catMap.entries()) {
-    // Find all months with expense transactions for this category
-    const txs = await prisma.transaction.findMany({
-      where: {
-        categoryId: catId,
-        type: "EXPENSE",
-        account: { userId },
-      },
-      select: { date: true },
-    });
-
-    const monthKeys = new Set([
-      ...months.keys(),
-      `${currentYear}-${currentMonth}`,
-    ]);
-
-    for (const t of txs) {
-      const tY = t.date.getFullYear();
-      const tM = t.date.getMonth() + 1;
-      monthKeys.add(`${tY}-${tM}`);
-    }
+  for (const cat of categories) {
+    const config = catConfigMap.get(cat.id);
 
     for (const key of monthKeys) {
       const [kYear, kMonth] = key.split("-").map(Number);
@@ -118,19 +116,31 @@ const getBudgets = async (userId, month, year) => {
       if (month && Number(month) !== kMonth) continue;
       if (year && Number(year) !== kYear) continue;
 
-      if (months.has(key)) {
-        allBudgets.push(months.get(key));
-      } else {
+      if (config && config.months.has(key)) {
+        allBudgets.push(config.months.get(key));
+      } else if (config) {
         // Carry forward the latest limit configured for this category
         allBudgets.push({
-          id: `rec_${catId}_${kYear}_${kMonth}`,
-          amount: latestAmount,
+          id: `rec_${cat.id}_${kYear}_${kMonth}`,
+          amount: config.latestAmount,
           month: kMonth,
           year: kYear,
           userId,
-          categoryId: catId,
-          category,
+          categoryId: cat.id,
+          category: cat,
           isRecurring: true,
+        });
+      } else {
+        // Category with no limit set yet (amount 0)
+        allBudgets.push({
+          id: `unset_${cat.id}_${kYear}_${kMonth}`,
+          amount: 0,
+          month: kMonth,
+          year: kYear,
+          userId,
+          categoryId: cat.id,
+          category: cat,
+          isUnset: true,
         });
       }
     }
@@ -145,7 +155,7 @@ const getBudgets = async (userId, month, year) => {
 };
 
 const updateBudget = async (id, data, userId) => {
-  if (id.startsWith("rec_")) {
+  if (id.startsWith("rec_") || id.startsWith("unset_")) {
     const { categoryId, amount, month, year } = data;
     const upserted = await prisma.budget.upsert({
       where: {
@@ -156,11 +166,11 @@ const updateBudget = async (id, data, userId) => {
           year: Number(year),
         },
       },
-      update: { amount },
+      update: { amount: Number(amount) },
       create: {
         userId,
         categoryId,
-        amount,
+        amount: Number(amount),
         month: Number(month),
         year: Number(year),
       },
@@ -187,7 +197,16 @@ const updateBudget = async (id, data, userId) => {
 };
 
 const deleteBudget = async (id, userId) => {
-  if (id.startsWith("rec_")) {
+  if (id.startsWith("rec_") || id.startsWith("unset_")) {
+    const parts = id.split("_");
+    if (parts.length >= 4) {
+      const categoryId = parts[1];
+      const year = Number(parts[2]);
+      const month = Number(parts[3]);
+      await prisma.budget.deleteMany({
+        where: { userId, categoryId, month, year },
+      });
+    }
     return;
   }
 

@@ -68,11 +68,19 @@ export const BudgetFormModal = ({
     }
   };
 
+  const expenseCategories = categories.filter(
+    (c) => c.name !== "Salary" && c.name !== "Freelance"
+  );
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? "Edit Budget" : "Add Budget"}
+      title={
+        initialData?.amount
+          ? `Edit ${categories.find((c) => c.id === form.categoryId)?.name || ""} Budget`
+          : `Set ${categories.find((c) => c.id === form.categoryId)?.name || ""} Budget Limit`
+      }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Select
@@ -83,7 +91,7 @@ export const BudgetFormModal = ({
           required
         >
           <option value="">Select category</option>
-          {categories.map((c) => (
+          {expenseCategories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
