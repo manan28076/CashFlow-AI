@@ -106,157 +106,173 @@ export const BudgetCard = ({
   const remaining = (activeBudget.amount ?? 0) - (activeBudget.spent ?? 0);
 
   const categoryColor =
-    CATEGORY_COLORS[category.name] || category.color || "#6366f1";
+    CATEGORY_COLORS[category.name] || category.color || "#ea580c";
+
+  const isCurrentMonth =
+    activeBudget.month === currentMonth && activeBudget.year === currentYear;
 
   return (
-    <Card className="flex flex-col gap-3.5 border border-stone-200/90 bg-white shadow-xs hover:shadow-md transition-shadow">
+    <Card className="group relative flex flex-col justify-between gap-4 overflow-hidden border border-stone-200/90 bg-white p-5 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-stone-300 hover:shadow-lg">
+      {/* Top Category Accent Line */}
+      <div
+        className="absolute left-0 right-0 top-0 h-1.5 opacity-90 transition-all duration-300 group-hover:h-2"
+        style={{ backgroundColor: categoryColor }}
+      />
+
       {/* Top Header: Category Info + Action Buttons */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2.5">
+      <div className="flex items-start justify-between gap-2 pt-0.5">
+        <div className="flex items-center gap-3 min-w-0">
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold text-white shadow-xs shrink-0"
-            style={{ backgroundColor: categoryColor }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-black text-white shadow-xs transition-transform duration-300 group-hover:scale-105"
+            style={{
+              backgroundColor: categoryColor,
+              boxShadow: `0 4px 12px ${categoryColor}33`,
+            }}
           >
             {(category.name || "Category").slice(0, 2).toUpperCase()}
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h3 className="font-semibold text-stone-900 leading-tight">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h3 className="truncate font-bold text-stone-900 leading-tight transition-colors group-hover:text-stone-950">
                 {category.name || "Category"}
               </h3>
               {!isConfigured && (
-                <span className="rounded bg-stone-100 px-1.5 py-0.2 text-[10px] font-medium text-stone-500">
+                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-500">
                   Unset (₹0)
                 </span>
               )}
             </div>
-            <p className="text-xs text-stone-500">
+            <p className="truncate text-xs font-medium text-stone-500">
               {isConfigured
-                ? `Limit: ${formatCurrency(activeBudget.amount)} / month`
+                ? `Limit: ${formatCurrency(activeBudget.amount)} / mo`
                 : "No limit set yet"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           {isConfigured ? (
             <button
               onClick={() => onAddMonth(category.id)}
               title="Set budget for another month"
-              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+              className="flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 shadow-2xs transition-all hover:scale-105 hover:bg-emerald-100 active:scale-95"
             >
               <Plus size={13} />
-              Add Month
+              <span>Add Month</span>
             </button>
           ) : (
             <button
               onClick={() => onEdit(activeBudget)}
-              className="flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors shadow-2xs"
+              className="flex items-center gap-1 rounded-lg bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700 shadow-2xs transition-all hover:scale-105 hover:bg-orange-100 active:scale-95"
             >
               <Plus size={13} />
-              Set Limit
+              <span>Set Limit</span>
             </button>
           )}
 
           <button
             onClick={() => onEdit(activeBudget)}
-            className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition-colors"
+            className="rounded-lg p-1.5 text-stone-400 transition-all hover:bg-stone-100 hover:text-stone-700 active:scale-90"
             title={isConfigured ? "Edit budget limit" : "Set budget limit"}
             aria-label="Edit budget"
           >
-            <Pencil size={15} />
+            <Pencil size={14} />
           </button>
 
           <button
             onClick={() => onDelete(activeBudget.id)}
-            className="rounded-md p-1.5 text-stone-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            className="rounded-lg p-1.5 text-stone-400 transition-all hover:bg-red-50 hover:text-red-600 active:scale-90"
             title={isConfigured ? "Delete / Reset budget limit" : "Reset budget limit"}
             aria-label="Delete budget"
           >
-            <Trash2 size={15} />
+            <Trash2 size={14} />
           </button>
         </div>
       </div>
 
-      {/* Active Month Spotlight */}
-      <div className="rounded-xl bg-stone-50/80 border border-stone-100 p-3.5 flex flex-col gap-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-medium text-stone-600">
+      {/* Active Month Spotlight Box */}
+      <div className="flex flex-col gap-3 rounded-xl border border-stone-200/70 bg-gradient-to-b from-stone-50/90 to-stone-50/40 p-4 shadow-2xs transition-all duration-300 group-hover:border-stone-300/80">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700">
             <Calendar size={13} className="text-stone-400" />
             <span>
               {monthName(activeBudget.month)} {activeBudget.year}
             </span>
-            {activeBudget.month === currentMonth &&
-              activeBudget.year === currentYear && (
-                <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">
-                  Current
-                </span>
-              )}
+            {isCurrentMonth && (
+              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-orange-800">
+                Current
+              </span>
+            )}
           </div>
-          {isConfigured ? (
-            <span
-              className={cn(
-                "font-numeric text-xs font-bold px-2 py-0.5 rounded-full",
-                isOver
-                  ? "bg-red-100 text-red-700"
-                  : isWarning
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-emerald-100 text-emerald-700"
-              )}
-            >
-              {Math.round(activeBudget.percentUsed ?? 0)}%
-            </span>
-          ) : (activeBudget.spent ?? 0) > 0 ? (
-            <span className="font-numeric text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-              Unbudgeted
-            </span>
-          ) : (
-            <span className="font-numeric text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200/70 text-stone-600">
-              ₹0 limit
-            </span>
-          )}
+
+          <div>
+            {isConfigured ? (
+              <span
+                className={cn(
+                  "font-numeric text-xs font-bold px-2.5 py-0.5 rounded-full shadow-2xs",
+                  isOver
+                    ? "bg-red-100 text-red-700"
+                    : isWarning
+                    ? "bg-amber-100 text-amber-800"
+                    : "bg-emerald-100 text-emerald-700"
+                )}
+              >
+                {Math.round(activeBudget.percentUsed ?? 0)}% used
+              </span>
+            ) : (activeBudget.spent ?? 0) > 0 ? (
+              <span className="font-numeric text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100/90 text-amber-900 border border-amber-200 shadow-2xs">
+                Unbudgeted
+              </span>
+            ) : (
+              <span className="font-numeric text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200/60 text-stone-500">
+                ₹0 limit
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Description: 5000 of 10000 and status */}
-        <div className="flex items-baseline justify-between text-sm">
-          <span className="font-numeric font-semibold text-stone-900 text-base">
-            {formatCurrency(activeBudget.spent ?? 0)}{" "}
-            <span className="text-xs font-normal text-stone-500">
+        {/* Spent Amount & Runway Balance */}
+        <div className="flex items-end justify-between gap-2">
+          <div className="flex flex-col">
+            <span className="font-numeric text-xl font-black text-stone-900 tracking-tight leading-none">
+              {formatCurrency(activeBudget.spent ?? 0)}
+            </span>
+            <span className="mt-1 text-xs font-medium text-stone-500">
               {isConfigured
-                ? `of ${formatCurrency(activeBudget.amount)}`
+                ? `budgeted: ${formatCurrency(activeBudget.amount)}`
                 : "spent (no limit set)"}
             </span>
-          </span>
+          </div>
 
-          <span className="text-xs font-numeric">
+          <div className="shrink-0 text-right">
             {isConfigured ? (
               remaining >= 0 ? (
-                <span className="text-stone-600 font-medium">
+                <span className="font-numeric text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 shadow-2xs">
                   {formatCurrency(remaining)} left
                 </span>
               ) : (
-                <span className="text-red-600 font-semibold">
+                <span className="font-numeric text-xs font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 shadow-2xs">
                   {formatCurrency(Math.abs(remaining))} over
                 </span>
               )
             ) : (activeBudget.spent ?? 0) > 0 ? (
               <button
                 onClick={() => onEdit(activeBudget)}
-                className="text-indigo-600 font-semibold text-[11px] underline hover:text-indigo-800"
+                className="text-xs font-bold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-2.5 py-1 rounded-lg transition-all shadow-2xs"
               >
-                Set limit to track
+                Set limit to track →
               </button>
             ) : (
-              <span className="text-stone-400 text-[11px]">No activity</span>
+              <span className="text-[11px] font-medium text-stone-400">No expenses</span>
             )}
-          </span>
+          </div>
         </div>
 
-        {/* Progress Bar Line */}
-        <div className="h-2.5 w-full overflow-hidden rounded-full bg-stone-200/70">
+        {/* Animated Progress Bar */}
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-stone-200/80 p-0.5 shadow-inner">
           <div
             className={cn(
-              "h-full rounded-full transition-all duration-300",
+              "h-full rounded-full transition-all duration-700 ease-out shadow-xs",
               isConfigured
                 ? isOver
                   ? "bg-red-500"
@@ -273,10 +289,10 @@ export const BudgetCard = ({
       </div>
 
       {/* Monthly History Scroll Strip */}
-      <div className="flex flex-col gap-1.5 pt-0.5">
+      <div className="flex flex-col gap-2 pt-0.5">
         <div className="flex items-center justify-between text-xs text-stone-500">
-          <span className="font-medium text-stone-700">Monthly History</span>
-          <span className="text-[11px] text-stone-400">Scroll to view & select →</span>
+          <span className="font-bold text-stone-700">Monthly History</span>
+          <span className="text-[11px] font-medium text-stone-400">Scroll to view & select →</span>
         </div>
 
         <div className="flex gap-2.5 overflow-x-auto pb-1.5 pt-0.5 scrollbar-thin scrollbar-thumb-stone-200">
@@ -298,53 +314,53 @@ export const BudgetCard = ({
                 key={b.id}
                 onClick={() => setSelectedId(b.id)}
                 className={cn(
-                  "flex min-w-[145px] max-w-[165px] shrink-0 flex-col gap-1 rounded-lg border p-2 text-left transition-all",
+                  "flex min-w-[155px] max-w-[175px] shrink-0 flex-col gap-1.5 rounded-xl border p-2.5 text-left transition-all duration-200 cursor-pointer select-none",
                   isSelected
-                    ? "border-indigo-500 bg-indigo-50/40 shadow-2xs ring-1 ring-indigo-500"
-                    : "border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50/50"
+                    ? "border-orange-500 bg-orange-50/50 shadow-xs ring-1.5 ring-orange-400 scale-[1.02]"
+                    : "border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50/70 hover:scale-[1.01]"
                 )}
               >
-                {/* Month Name & Year */}
-                <div className="flex items-center justify-between text-xs">
+                {/* Month Name & Limit/Status Badge with distinct spacing */}
+                <div className="flex items-center justify-between gap-2 text-xs">
                   <span
                     className={cn(
-                      "font-semibold truncate",
-                      isSelected ? "text-indigo-950" : "text-stone-800"
+                      "font-bold truncate",
+                      isSelected ? "text-orange-950" : "text-stone-800"
                     )}
                   >
-                    {monthName(b.month)} {b.year}
+                    {monthName(b.month).slice(0, 3)} {b.year}
                   </span>
                   <span
                     className={cn(
-                      "text-[10px] font-bold font-numeric",
+                      "text-[10px] font-extrabold font-numeric shrink-0 px-1.5 py-0.2 rounded-full",
                       bConfigured
                         ? bOver
-                          ? "text-red-600"
+                          ? "bg-red-100 text-red-700"
                           : bWarn
-                          ? "text-amber-600"
-                          : "text-emerald-600"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-emerald-100 text-emerald-700"
                         : (b.spent ?? 0) > 0
-                        ? "text-amber-600"
-                        : "text-stone-400"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-stone-100 text-stone-500"
                     )}
                   >
                     {bConfigured ? `${Math.round(b.percentUsed ?? 0)}%` : "₹0 limit"}
                   </span>
                 </div>
 
-                {/* Description: 5000 of 10000 */}
+                {/* Amount spent */}
                 <p className="font-numeric text-[11px] text-stone-600 leading-tight">
-                  <span className="font-medium text-stone-900">
+                  <span className="font-bold text-stone-900">
                     {formatCurrency(b.spent ?? 0)}
                   </span>{" "}
                   {bConfigured ? `of ${formatCurrency(b.amount)}` : "spent"}
                 </p>
 
-                {/* Progress bar line */}
+                {/* Micro Progress Bar */}
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
                   <div
                     className={cn(
-                      "h-full rounded-full transition-all",
+                      "h-full rounded-full transition-all duration-500",
                       bConfigured
                         ? bOver
                           ? "bg-red-500"
@@ -365,10 +381,10 @@ export const BudgetCard = ({
           {/* Quick Add / Change Month button */}
           <button
             onClick={() => onAddMonth(category.id)}
-            className="flex min-w-[105px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-stone-300 p-2 text-stone-500 hover:border-indigo-500 hover:bg-indigo-50/40 hover:text-indigo-700 transition-all text-xs"
+            className="flex min-w-[110px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-stone-300 p-2.5 text-stone-500 hover:border-orange-500 hover:bg-orange-50/40 hover:text-orange-700 transition-all text-xs cursor-pointer hover:scale-[1.02] active:scale-95"
           >
-            <Plus size={15} />
-            <span className="font-medium">{isConfigured ? "+ Add Month" : "+ Set Limit"}</span>
+            <Plus size={16} />
+            <span className="font-bold text-[11px]">{isConfigured ? "+ Add Month" : "+ Set Limit"}</span>
           </button>
         </div>
       </div>
