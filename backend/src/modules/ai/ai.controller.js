@@ -107,10 +107,56 @@ const parseQuickAdd = asyncHandler(async (req, res) => {
   );
 });
 
+const liveAudit = asyncHandler(async (req, res) => {
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      account: {
+        userId: req.user.id,
+      },
+    },
+    include: {
+      category: true,
+      account: true,
+    },
+    orderBy: {
+      date: "desc",
+    },
+    take: 50,
+  });
+
+  if (!transactions || transactions.length === 0) {
+    return res.status(200).json(
+      new ApiResponse(200, "No transactions found to audit", null)
+    );
+  }
+
+  const mappedTransactions = transactions.map((t, idx) => ({
+    id: idx,
+    merchant: t.merchant || t.description,
+    amount: t.amount,
+    date: t.date ? t.date.toISOString().split("T")[0] : undefined,
+    category: t.category?.name || "Other",
+    type: t.type,
+  }));
+
+  const result = await testAI(mappedTransactions);
+
+  return res.status(200).json(
+    new ApiResponse(200, "Live audit generated successfully", {
+      transactionCount: transactions.length,
+      insights: result.insights,
+      budget: result.budget,
+      fraud: result.fraud,
+      health: result.health,
+    })
+  );
+});
+
 module.exports = {
   test,
   uploadStatement,
   ask,
   chat,
   parseQuickAdd,
+  liveAudit,
 };

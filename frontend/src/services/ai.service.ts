@@ -29,4 +29,39 @@ export const aiService = {
     });
     return res.data.data;
   },
+
+  runLiveAudit: async () => {
+    try {
+      const res = await api.post<ApiResponse<any>>("/ai/live-audit");
+      if (res.data.data) {
+        return res.data.data;
+      }
+    } catch {
+      // Fallback: fetch user's real transactions and use /ai/test
+    }
+
+    const txRes = await api.get<ApiResponse<{ transactions: any[] }>>("/transactions", {
+      params: { limit: 50 },
+    });
+    const txList = txRes.data.data?.transactions || [];
+    if (txList.length === 0) {
+      return null;
+    }
+
+    const testRes = await api.post<ApiResponse<any>>("/ai/test", {
+      transactions: txList.map((t) => ({
+        merchant: t.merchant || t.description || "Expense",
+        amount: Number(t.amount) || 0,
+        date: t.date ? String(t.date).split("T")[0] : undefined,
+      })),
+    });
+
+    return {
+      transactionCount: txList.length,
+      insights: testRes.data.data.insights || null,
+      budget: testRes.data.data.budget || null,
+      fraud: testRes.data.data.fraud || null,
+      health: testRes.data.data.health || null,
+    };
+  },
 };

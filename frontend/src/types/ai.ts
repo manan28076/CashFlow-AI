@@ -8,6 +8,14 @@ export interface AIUploadResult {
   health: HealthResult | null;
 }
 
+export interface LiveAuditResult {
+  transactionCount?: number;
+  insights: InsightResult | null;
+  budget: BudgetAdviceResult | null;
+  fraud: FraudResult | null;
+  health: HealthResult | null;
+}
+
 export interface InsightResult {
   summary: string;
   topCategory: string;

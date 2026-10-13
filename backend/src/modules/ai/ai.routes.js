@@ -2,7 +2,7 @@ const express = require("express");
 
 const upload = require("./upload/upload.middleware");
 
-const { test, uploadStatement, ask, chat, parseQuickAdd } = require("./ai.controller");
+const { test, uploadStatement, ask, chat, parseQuickAdd, liveAudit } = require("./ai.controller");
 
 const { protect } = require("../../middlewares/auth.middleware");
 
@@ -17,5 +17,8 @@ router.post("/ask", protect, ask);
 router.post("/chat", protect, chat);
 
 router.post("/quick-add", protect, parseQuickAdd);
+
+router.post("/live-audit", protect, liveAudit);
+router.get("/live-audit", protect, liveAudit);
 
 module.exports = router;
