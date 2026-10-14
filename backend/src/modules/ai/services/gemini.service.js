@@ -326,5 +326,6 @@ module.exports = {
   askGemini,
   askGeminiStructured,
   calculateCost,
+  logAiCall,
   MODELS,
 };

@@ -210,3 +210,51 @@ Verified directly from `backend/node_modules/@google/genai` source (`dist/index.
 - **Verification**:
   - Table-driven unit tests in `backend/tests/ai.anomaly.test.js` with hand-computed mathematical proofs documented in comments (Modified Z-score calculation 15.51, MAD=0 fallback, duplicate detection, history threshold, empty/edge cases, fraud agent strict contract).
   - Total test suite: 46 passing tests, 0 failing across 15 suites. `npx prisma validate` passed.
+---
+
+## Phase 4: Hardened Text-to-SQL + Tool-Calling Agent Summary
+- **Hardened Text-to-SQL Security (`utils/sqlGuard.js`)**:
+  - Single statement enforcement, rejecting multi-statements and SQL comments (`--`, `/* */`).
+  - Word-boundary blocklist (`\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|pg_|information_schema)\b`) preventing false positives on legitimate column names (e.g. `createdAt`, `updatedAt`).
+  - Strict function allowlist: `sum`, `count`, `avg`, `min`, `max`, `coalesce`, `date_trunc`, `extract`, `round`, `lower`, `upper`, `to_char`, `now`, `current_date`. Blocks all unlisted system calls (e.g. `pg_sleep`, `version`).
+  - Table allowlist: derived from schema (`Transaction`, `Account`, `Category`, `Budget`, `MonthlyBudget`). System/auth tables (`User`, `SubscriptionPayment`, `AiCallLog`, `MerchantRule`, `PendingAiAction`) are strictly forbidden.
+  - **Structural User Scoping**: The model is never trusted to write `WHERE userId = ...`. Queries are wrapped in Common Table Expressions (CTEs) that pre-filter every allowed table by `$1` (`userId` bound parameter):
+    ```sql
+    WITH "Transaction" AS (
+      SELECT t.* FROM "Transaction" t
+      JOIN "Account" a ON t."accountId" = a.id
+      WHERE a."userId" = $1
+    ),
+    "Account" AS (SELECT * FROM "Account" WHERE "userId" = $1),
+    "Budget" AS (SELECT * FROM "Budget" WHERE "userId" = $1),
+    "MonthlyBudget" AS (SELECT * FROM "MonthlyBudget" WHERE "userId" = $1),
+    "Category" AS (SELECT * FROM "Category")
+    SELECT ...
+    ```
+  - Read-only execution via `prisma.$transaction` with `SET LOCAL statement_timeout = '5000ms'`, forced `LIMIT 200`, and capped result size returned to the LLM.
+  - 27 unit tests in `backend/tests/ai.sqlGuard.test.js` validating injection attacks, stacked queries, table access violations, function restrictions, and valid CTE generation.
+- **Prisma Schema Update**:
+  - Added model `PendingAiAction` (`id`, `userId`, `tool`, `argsJson`, `status`, `expiresAt`, `createdAt`, `updatedAt`) with index on `[userId, status]` and cascade delete on user deletion.
+  - Synced to Supabase database with `npx prisma db push`.
+- **Tool-Calling Agent (`agents/finance.agent.js`)**:
+  - Autonomous multi-turn function-calling loop with `@google/genai` tool declarations.
+  - Available tools:
+    - `run_sql(query)`: Executes validated SQL via hardened CTE path.
+    - `get_budgets(month?, year?)`: Retrieves user budgets deterministically.
+    - `get_spending_summary(from, to, groupBy)`: Deterministic database aggregation (no LLM math).
+    - `forecast_spending(category?, horizonDays)`: Deterministic run-rate / moving-average spending projection.
+    - `search_tax_knowledge(query)`: Extensible hook for India Tax RAG (Phase 8).
+    - `add_transaction(amount, type, category, description, date)`: Write tool staging a pending action.
+    - `create_budget(category, amount, month, year)`: Write tool staging a pending action.
+  - **Write Tool Safety**: Write tools never execute immediately. They create a `PendingAiAction` expiring in 10 minutes. The user must confirm via `POST /api/ai/agent/confirm`. Confirmation is idempotent and strictly user-scoped.
+  - **Loop Limits**: Max 6 iterations, 30s timeout, detection of repeated identical tool calls, and step recording (`steps` array returned with tool name, args, latency, and summarized result).
+- **API Endpoints & Rate Limiting**:
+  - `POST /api/ai/agent`: Protected by `aiAgentLimiter` (15 requests/minute). Runs the autonomous agent loop.
+  - `POST /api/ai/agent/confirm`: Confirms and executes staged pending actions.
+  - `POST /api/ai/chat`: Preserved intact as backward-compatible conversational endpoint.
+- **Frontend Integration**:
+  - Updated `frontend/src/components/ai/ChatBox.tsx` with collapsible "How I got this answer" step viewer and interactive Confirm/Cancel action buttons for pending AI actions.
+  - Updated `frontend/src/services/ai.service.ts` and `frontend/src/types/ai.ts`.
+- **Verification**:
+  - `backend/tests/ai.sqlGuard.test.js` (27 tests) and `backend/tests/ai.financeAgent.test.js` (5 suites, 5 tests).
+  - Total test suite: 78 passing tests, 0 failing across 22 suites. `npx prisma validate` passed.

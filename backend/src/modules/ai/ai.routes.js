@@ -2,13 +2,27 @@ const express = require("express");
 
 const upload = require("./upload/upload.middleware");
 
-const { test, uploadStatement, ask, chat, parseQuickAdd, liveAudit, getMetrics } = require("./ai.controller");
+const {
+  test,
+  uploadStatement,
+  ask,
+  chat,
+  parseQuickAdd,
+  liveAudit,
+  getMetrics,
+  agent,
+  confirmAction,
+} = require("./ai.controller");
 
 const { protect } = require("../../middlewares/auth.middleware");
+const { aiAgentLimiter } = require("../../middlewares/rateLimiter");
 
 const router = express.Router();
 
 router.get("/metrics", protect, getMetrics);
+
+router.post("/agent", protect, aiAgentLimiter, agent);
+router.post("/agent/confirm", protect, confirmAction);
 
 router.post("/test", protect, test);
 

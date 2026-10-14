@@ -159,9 +159,21 @@ const getAIMetrics = async (userId, { days = 7 } = {}) => {
   };
 };
 
+const handleAgentQuery = async ({ message, conversationHistory, userId }) => {
+  const { runFinanceAgent } = require("./agents/finance.agent");
+  return runFinanceAgent({ message, conversationHistory, userId });
+};
+
+const handleConfirmAgentAction = async ({ actionId, cancel, userId }) => {
+  const { confirmPendingAction } = require("./agents/finance.agent");
+  return confirmPendingAction({ actionId, cancel, userId });
+};
+
 module.exports = {
   testAI,
   askQuestion,
   chatWithAgent,
   getAIMetrics,
+  handleAgentQuery,
+  handleConfirmAgentAction,
 };

@@ -27,6 +27,7 @@ model User {
   payments              SubscriptionPayment[]
   aiCallLogs            AiCallLog[]
   merchantRules         MerchantRule[]
+  pendingAiActions      PendingAiAction[]
 }
 
 model SubscriptionPayment {
@@ -169,4 +170,19 @@ model MerchantRule {
 
   @@unique([userId, merchantKey])
   @@index([userId, merchantKey])
+}
+
+model PendingAiAction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool      String
+  argsJson  String
+  status    String   @default("PENDING") // "PENDING" | "CONFIRMED" | "CANCELLED" | "EXPIRED"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([expiresAt])
 }

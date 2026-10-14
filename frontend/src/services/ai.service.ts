@@ -1,6 +1,6 @@
 import api from "./api";
 import type { ApiResponse } from "../types/api";
-import type { AIUploadResult, AskResult, ChatResult } from "../types/ai";
+import type { AIUploadResult, AskResult, ChatResult, AgentResult } from "../types/ai";
 
 export const aiService = {
   uploadStatement: async (file: File, accountId: string) => {
@@ -26,6 +26,27 @@ export const aiService = {
   chat: async (message: string) => {
     const res = await api.post<ApiResponse<ChatResult>>("/ai/chat", {
       message,
+    });
+    return res.data.data;
+  },
+
+  agent: async (
+    message: string,
+    conversationHistory?: Array<{ role: "user" | "assistant" | "model"; text: string }>
+  ) => {
+    const res = await api.post<ApiResponse<AgentResult>>("/ai/agent", {
+      message,
+      conversationHistory,
+    });
+    return res.data.data;
+  },
+
+  confirmAction: async (actionId: string, cancel = false) => {
+    const res = await api.post<
+      ApiResponse<{ success: boolean; status: string; message: string; result?: unknown }>
+    >("/ai/agent/confirm", {
+      actionId,
+      cancel,
     });
     return res.data.data;
   },

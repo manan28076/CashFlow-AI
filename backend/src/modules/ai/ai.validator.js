@@ -30,10 +30,30 @@ const metricsQuerySchema = z.object({
     .pipe(z.number().int().min(1).max(90)),
 });
 
+const agentQuerySchema = z.object({
+  message: z.string().min(1, "message is required"),
+  conversationHistory: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant", "model"]),
+        text: z.string(),
+      })
+    )
+    .max(10)
+    .optional(),
+});
+
+const confirmAgentActionSchema = z.object({
+  actionId: z.string().min(1, "actionId is required"),
+  cancel: z.boolean().optional(),
+});
+
 module.exports = {
   testAISchema,
   uploadStatementSchema,
   askSchema,
   chatSchema,
   metricsQuerySchema,
+  agentQuerySchema,
+  confirmAgentActionSchema,
 };

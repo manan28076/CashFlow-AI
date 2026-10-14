@@ -1,13 +1,15 @@
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiResponse = require("../../utils/apiResponse");
 const { parseCSV } = require("./parsers/statement.parser");
-const { testAI, askQuestion, chatWithAgent, getAIMetrics } = require("./ai.service");
+const { testAI, askQuestion, chatWithAgent, getAIMetrics, handleAgentQuery, handleConfirmAgentAction } = require("./ai.service");
 const {
   testAISchema,
   uploadStatementSchema,
   askSchema,
   chatSchema,
   metricsQuerySchema,
+  agentQuerySchema,
+  confirmAgentActionSchema,
 } = require("./ai.validator");
 const { resolveCategoryId } = require("./utils/categoryMap");
 const {
@@ -164,6 +166,32 @@ const getMetrics = asyncHandler(async (req, res) => {
   );
 });
 
+const agent = asyncHandler(async (req, res) => {
+  const { message, conversationHistory } = agentQuerySchema.parse(req.body);
+  const result = await handleAgentQuery({
+    message,
+    conversationHistory,
+    userId: req.user.id,
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, "Agent query executed successfully", result)
+  );
+});
+
+const confirmAction = asyncHandler(async (req, res) => {
+  const { actionId, cancel } = confirmAgentActionSchema.parse(req.body);
+  const result = await handleConfirmAgentAction({
+    actionId,
+    cancel,
+    userId: req.user.id,
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, "Agent action processed successfully", result)
+  );
+});
+
 module.exports = {
   test,
   uploadStatement,
@@ -172,4 +200,6 @@ module.exports = {
   parseQuickAdd,
   liveAudit,
   getMetrics,
+  agent,
+  confirmAction,
 };

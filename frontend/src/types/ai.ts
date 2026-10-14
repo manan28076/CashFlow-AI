@@ -53,3 +53,24 @@ export interface ChatResult {
   rows?: Record<string, unknown>[];
   answer: string;
 }
+
+export interface AgentStep {
+  tool: string;
+  args: Record<string, unknown>;
+  summary: string;
+  latencyMs: number;
+}
+
+export interface PendingAiAction {
+  actionId: string;
+  tool: string;
+  summary: string;
+  expiresAt: string;
+  status?: string;
+}
+
+export interface AgentResult {
+  answer: string;
+  steps: AgentStep[];
+  pendingActions: PendingAiAction[];
+}
