@@ -18,6 +18,7 @@ import { AIReport } from "./pages/AIReport";
 import { Settings } from "./pages/Settings";
 import { Import } from "./pages/Import";
 import { NotFound } from "./pages/NotFound";
+import { LandingPage } from "./pages/LandingPage";
 
 function App() {
   return (
@@ -35,12 +36,10 @@ function App() {
             }}
           />
           <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Route>
+          {/* Public Landing & Authentication */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LandingPage />} />
+          <Route path="/register" element={<LandingPage />} />
 
           <Route
             element={
