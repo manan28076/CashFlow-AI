@@ -311,3 +311,17 @@ Verified directly from `backend/node_modules/@google/genai` source (`dist/index.
 - **Verification**:
   - `backend/tests/ai.proactive.test.js`: 7 tests verifying hand-computed burn-rate math (on track, at risk, over budget), week-over-week deltas, week key determinism, database idempotency, and cross-user isolation.
   - Total test suite: 102 passing tests, 0 failing across 33 suites. `npx prisma validate` passed.
+---
+
+## Phase 7: End-to-End Observability Verification Summary
+- **Unified Call Wrapper Enforcement**:
+  - Re-verified all 11 AI agent call paths: `category`, `fraud`, `insight`, `budget`, `health`, `router`, `sql`, `answer`, `quickadd`, `unified`, `finance`, and `proactive`.
+  - Refactored `finance.agent.js` so that its multi-turn tool-calling loop invokes `callGemini` at each individual iteration, automatically recording token usage, model fallback attempts, execution latency, and success/failure rows into `AiCallLog`.
+  - Completely eliminated any direct client instantiations (`new GoogleGenAI`) and direct `.models.generateContent()` calls outside `src/modules/ai/services/gemini.service.js`.
+- **Architectural Hygiene Linter & Test (`tests/ai.observability.test.js`)**:
+  - Added an automated architectural AST/grep test that scans every `.js` file across the entire `backend/src` tree.
+  - Strictly asserts 0 occurrences of `@google/genai` imports, 0 direct SDK instantiations, and 0 direct API method calls outside `gemini.service.js`. Fails the test runner if any code bypasses the central wrapper.
+  - Asserts that all agent modules import and route via `callGemini`.
+- **Verification**:
+  - `backend/tests/ai.observability.test.js`: 2 tests passed.
+  - Full test suite: 104 passing tests, 0 failing across 34 suites. `npx prisma validate` passed.

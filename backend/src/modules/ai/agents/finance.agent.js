@@ -11,7 +11,7 @@
 
 const { z } = require("zod");
 const prisma = require("../../../lib/prisma");
-const { ai, logAiCall, MODELS } = require("../services/gemini.service");
+const { callGemini } = require("../services/gemini.service");
 const { executeHardenedSql } = require("../utils/sqlGuard");
 const { getBudgets } = require("../../budget/budget.service");
 const { getCategoryMap, resolveCategoryId } = require("../utils/categoryMap");
@@ -321,18 +321,15 @@ const runFinanceAgent = async ({ message, conversationHistory = [], userId }) =>
       break;
     }
 
-    // Call Gemini with tools configured
-    const callStart = Date.now();
-    let response;
+    // Call Gemini with tools configured via central wrapper (writes AiCallLog for each iteration)
+    let geminiRes;
     try {
-      response = await ai.models.generateContent({
-        model: MODELS.FLASH,
+      geminiRes = await callGemini({
+        agentName: "finance_agent",
         contents,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          tools: [{ functionDeclarations: FUNCTION_DECLARATIONS }],
-          temperature: 0.1,
-        },
+        systemInstruction: SYSTEM_INSTRUCTION,
+        tools: [{ functionDeclarations: FUNCTION_DECLARATIONS }],
+        userId,
       });
     } catch (err) {
       console.error(`[FinanceAgent] Gemini API error at iteration ${iteration}:`, err.message);
@@ -340,9 +337,10 @@ const runFinanceAgent = async ({ message, conversationHistory = [], userId }) =>
       break;
     }
 
-    if (response?.usageMetadata) {
-      totalPromptTokens += response.usageMetadata.promptTokenCount || 0;
-      totalCompletionTokens += response.usageMetadata.candidatesTokenCount || 0;
+    const response = geminiRes.raw;
+    if (geminiRes.totalTokens) {
+      totalPromptTokens += geminiRes.promptTokens || 0;
+      totalCompletionTokens += geminiRes.completionTokens || 0;
     }
 
     const functionCalls = response?.functionCalls || [];
@@ -501,19 +499,6 @@ const runFinanceAgent = async ({ message, conversationHistory = [], userId }) =>
   }
 
   const overallLatency = Date.now() - startTime;
-
-  // Log overall AI agent execution
-  await logAiCall({
-    userId,
-    agentName: "finance_agent",
-    model: MODELS.FLASH,
-    promptTokens: totalPromptTokens,
-    completionTokens: totalCompletionTokens,
-    totalTokens: totalPromptTokens + totalCompletionTokens,
-    latencyMs: overallLatency,
-    success: true,
-    retries: iteration - 1,
-  }).catch(() => {});
 
   return {
     answer: finalAnswer || "Completed processing your financial request.",
