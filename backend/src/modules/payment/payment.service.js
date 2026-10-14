@@ -63,8 +63,10 @@ const createOrder = async ({ userId, plan, billingCycle }) => {
       throw new AppError(err?.error?.description || "Failed to initiate Razorpay order", 500);
     }
   } else {
-    // Development/Test fallback when API keys are not supplied in .env
-    razorpayOrderId = `order_test_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    throw new AppError(
+      "Razorpay credentials are not configured on this server. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your environment variables (e.g. in your Render Dashboard).",
+      500
+    );
   }
 
   const expiresAt = new Date(Date.now() + planConfig.durationDays * 24 * 60 * 60 * 1000);
@@ -88,11 +90,11 @@ const createOrder = async ({ userId, plan, billingCycle }) => {
     amount: planConfig.amount,
     paise: planConfig.paise,
     currency: "INR",
-    keyId: RAZORPAY_KEY_ID || "rzp_test_fallback",
+    keyId: RAZORPAY_KEY_ID,
     plan: planConfig.planName,
     billingCycle: normalizedCycle,
     paymentRecordId: paymentRecord.id,
-    isTestMode: !razorpay,
+    isTestMode: false,
   };
 };
 
