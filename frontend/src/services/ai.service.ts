@@ -34,10 +34,14 @@ export const aiService = {
     message: string,
     conversationHistory?: Array<{ role: "user" | "assistant" | "model"; text: string }>
   ) => {
-    const res = await api.post<ApiResponse<AgentResult>>("/ai/agent", {
-      message,
-      conversationHistory,
-    });
+    const res = await api.post<ApiResponse<AgentResult>>(
+      "/ai/agent",
+      {
+        message,
+        conversationHistory,
+      },
+      { timeout: 60000 }
+    );
     return res.data.data;
   },
 

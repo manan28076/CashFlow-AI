@@ -21,7 +21,7 @@ const { getCategoryMap, resolveCategoryId } = require("../utils/categoryMap");
 // ==========================================
 
 const MAX_ITERATIONS = 6;
-const AGENT_TIMEOUT_MS = 25000;
+const AGENT_TIMEOUT_MS = 60000;
 
 const ToolArgSchemas = {
   run_sql: z.object({
