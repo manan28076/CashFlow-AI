@@ -35,6 +35,7 @@ import {
   loadRazorpayScript,
   type SubscriptionPaymentRecord,
 } from "../services/payment.service";
+import { generateTaxInvoicePDF } from "../utils/invoiceGenerator";
 
 export const Settings = () => {
   const { user, logout, updateUser, refreshUser } = useAuth();
@@ -833,11 +834,15 @@ export const Settings = () => {
                       <td className="py-3 text-right">
                         <button
                           type="button"
-                          onClick={() =>
-                            toast.success(
-                              `Receipt for ${p.plan} Plan (₹${p.amount}) Order ID: ${p.razorpayOrderId}`
-                            )
-                          }
+                          onClick={() => {
+                            try {
+                              generateTaxInvoicePDF(p, user);
+                              toast.success(`Tax Invoice INV-${p.id.slice(-6).toUpperCase()} downloaded!`);
+                            } catch (err: any) {
+                              toast.error("Failed to generate PDF receipt");
+                              console.error(err);
+                            }
+                          }}
                           className="inline-flex items-center gap-1 text-orange-600 dark:text-blue-400 hover:underline font-semibold"
                         >
                           <Download size={13} /> PDF
