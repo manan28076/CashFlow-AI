@@ -41,9 +41,10 @@ export const CategoryListItem = ({ category, onDelete }: CategoryListItemProps) 
     <div
       className={cn(
         "group relative flex items-center justify-between rounded-2xl border border-stone-200/90 bg-white p-3.5 sm:p-4 shadow-xs",
+        "dark:border-blue-900/40 dark:bg-[#111c35] dark:shadow-xs",
         "transition-all duration-300 ease-out",
-        "hover:-translate-y-1 hover:shadow-lg hover:scale-[1.015] hover:border-stone-300",
-        "hover:bg-gradient-to-r hover:from-stone-50/60 hover:to-white"
+        "hover:-translate-y-1 hover:shadow-lg hover:scale-[1.015] hover:border-stone-300 dark:hover:border-blue-700/50",
+        "hover:bg-gradient-to-r hover:from-stone-50/60 hover:to-white dark:hover:from-[#142343] dark:hover:to-[#111c35]"
       )}
     >
       <div className="flex items-center gap-3">
@@ -60,19 +61,19 @@ export const CategoryListItem = ({ category, onDelete }: CategoryListItemProps) 
 
         <div>
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-bold text-stone-900 group-hover:text-stone-950 transition-colors">
+            <h4 className="text-sm font-bold text-stone-900 dark:text-white group-hover:text-stone-950 dark:group-hover:text-blue-100 transition-colors">
               {category.name}
             </h4>
           </div>
 
           <div className="flex items-center gap-1.5 mt-0.5">
             {isIncome ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200/80 shadow-2xs">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs">
                 <ArrowUpRight size={10} />
                 Income
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600 border border-stone-200/80">
+              <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 dark:bg-slate-800/80 px-2 py-0.5 text-[10px] font-semibold text-stone-600 dark:text-slate-300 border border-stone-200/80 dark:border-slate-700">
                 <ArrowDownRight size={10} />
                 Expense
               </span>
@@ -84,7 +85,7 @@ export const CategoryListItem = ({ category, onDelete }: CategoryListItemProps) 
       {/* Delete Action Button */}
       <button
         onClick={onDelete}
-        className="rounded-xl p-2 text-stone-300 opacity-60 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all duration-200 cursor-pointer hover:scale-110"
+        className="rounded-xl p-2 text-stone-400 dark:text-slate-400 opacity-60 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 cursor-pointer hover:scale-110"
         aria-label="Delete category"
         title="Delete category"
       >

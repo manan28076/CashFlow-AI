@@ -29,6 +29,22 @@
     color: #f8fafc;
   }
 
+}
+
+@layer utilities {
+  html.dark .bg-white,
+  html.dark-blue .bg-white {
+    background-color: #111c35;
+  }
+  html.dark .bg-stone-50,
+  html.dark-blue .bg-stone-50 {
+    background-color: #0c1426;
+  }
+  html.dark .bg-stone-100,
+  html.dark-blue .bg-stone-100 {
+    background-color: #0e172a;
+  }
+
   html.dark .text-stone-900,
   html.dark-blue .text-stone-900 {
     color: #f8fafc;
@@ -39,23 +55,27 @@
   }
   html.dark .text-stone-700,
   html.dark-blue .text-stone-700 {
-    color: #e2e8f0;
+    color: #cbd5e1;
   }
   html.dark .text-stone-600,
   html.dark-blue .text-stone-600 {
-    color: #cbd5e1;
+    color: #94a3b8;
   }
   html.dark .text-stone-500,
   html.dark-blue .text-stone-500 {
     color: #94a3b8;
   }
   html.dark .border-stone-200,
-  html.dark-blue .border-stone-200 {
-    border-color: rgba(59, 130, 246, 0.18);
+  html.dark-blue .border-stone-200,
+  html.dark .border-stone-200\/90,
+  html.dark-blue .border-stone-200\/90 {
+    border-color: rgba(59, 130, 246, 0.22);
   }
   html.dark .border-stone-100,
-  html.dark-blue .border-stone-100 {
-    border-color: rgba(59, 130, 246, 0.1);
+  html.dark-blue .border-stone-100,
+  html.dark .border-stone-100\/90,
+  html.dark-blue .border-stone-100\/90 {
+    border-color: rgba(59, 130, 246, 0.12);
   }
 }
 

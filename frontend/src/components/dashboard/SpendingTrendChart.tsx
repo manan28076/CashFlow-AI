@@ -46,25 +46,25 @@ export const SpendingTrendChart = ({ data, isLoading }: SpendingTrendChartProps)
       : 0;
 
   return (
-    <Card className="flex flex-col justify-between overflow-hidden rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xs hover:shadow-md transition-all duration-300">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 pb-4 mb-4">
+    <Card className="flex flex-col justify-between overflow-hidden rounded-2xl border border-stone-200/90 dark:border-blue-900/40 bg-white dark:bg-[#0f172a] p-5 shadow-xs hover:shadow-md transition-all duration-300">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 dark:border-slate-800/80 pb-4 mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-600 shadow-2xs">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 shadow-2xs">
             <Activity size={18} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-stone-900">
+            <h3 className="text-base font-bold text-stone-900 dark:text-white">
               Spending Velocity Trend
             </h3>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-stone-500 dark:text-slate-400">
               Historical timeline of your monthly expenses
             </p>
           </div>
         </div>
 
         {avgMonthlySpend > 0 && (
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-50/80 px-3 py-1 text-xs font-semibold text-orange-800 border border-orange-200/60 shadow-2xs self-start sm:self-center">
-            <Sparkles size={12} className="text-orange-600" />
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-50/80 dark:bg-orange-950/70 px-3 py-1 text-xs font-semibold text-orange-800 dark:text-orange-300 border border-orange-200/60 dark:border-orange-800/60 shadow-2xs self-start sm:self-center">
+            <Sparkles size={12} className="text-orange-600 dark:text-orange-400" />
             <span>Avg: <strong>{formatCurrency(avgMonthlySpend)}</strong>/mo</span>
           </div>
         )}

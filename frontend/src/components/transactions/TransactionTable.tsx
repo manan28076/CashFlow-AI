@@ -33,9 +33,9 @@ export const TransactionTable = ({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-stone-200">
-      <table className="min-w-full divide-y divide-stone-800 text-sm">
-        <thead className="bg-white text-left text-xs uppercase tracking-wide text-stone-500">
+    <div className="overflow-x-auto rounded-xl border border-stone-200 dark:border-blue-900/40">
+      <table className="min-w-full divide-y divide-stone-200 dark:divide-slate-800 text-sm">
+        <thead className="bg-white dark:bg-[#0f172a] text-left text-xs uppercase tracking-wide text-stone-500 dark:text-slate-400">
           <tr>
             <th className="px-4 py-3">Merchant</th>
             <th className="px-4 py-3">Category</th>
@@ -46,24 +46,24 @@ export const TransactionTable = ({
             <th className="px-4 py-3 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-stone-800 bg-stone-50">
+        <tbody className="divide-y divide-stone-100 dark:divide-slate-800/80 bg-stone-50 dark:bg-[#111c35]">
           {transactions.map((t) => (
-            <tr key={t.id} className="hover:bg-white/60">
-              <td className="px-4 py-3 font-medium text-stone-800">
+            <tr key={t.id} className="hover:bg-white/60 dark:hover:bg-blue-950/40 transition-colors">
+              <td className="px-4 py-3 font-medium text-stone-800 dark:text-white">
                 <div className="flex items-center gap-2">
                   {t.isAnomaly && (
-                    <AlertTriangle size={14} className="text-amber-600" />
+                    <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" />
                   )}
                   {t.merchant || t.description}
                 </div>
               </td>
-              <td className="px-4 py-3 text-stone-500">
+              <td className="px-4 py-3 text-stone-500 dark:text-slate-400">
                 {t.category?.name ?? "—"}
               </td>
               <td
                 className={cn(
                   "px-4 py-3 font-numeric font-semibold",
-                  t.type === "INCOME" ? "text-emerald-600" : "text-red-600"
+                  t.type === "INCOME" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-rose-400"
                 )}
               >
                 {t.type === "INCOME" ? "+" : "-"}
@@ -74,27 +74,27 @@ export const TransactionTable = ({
                   className={cn(
                     "rounded-full px-2 py-0.5 text-xs font-medium",
                     t.type === "INCOME"
-                      ? "bg-emerald-500/15 text-emerald-600"
-                      : "bg-red-500/15 text-red-600"
+                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                      : "bg-red-500/15 text-red-600 dark:text-rose-400"
                   )}
                 >
                   {t.type}
                 </span>
               </td>
-              <td className="px-4 py-3 text-stone-500">{formatDate(t.date)}</td>
-              <td className="px-4 py-3 text-stone-500">{t.note || "—"}</td>
+              <td className="px-4 py-3 text-stone-500 dark:text-slate-400">{formatDate(t.date)}</td>
+              <td className="px-4 py-3 text-stone-500 dark:text-slate-400">{t.note || "—"}</td>
               <td className="px-4 py-3">
                 <div className="flex justify-end gap-1">
                   <button
                     onClick={() => onEdit(t)}
-                    className="rounded-md p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+                    className="rounded-md p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:text-slate-400 dark:hover:bg-blue-950/60 dark:hover:text-blue-300 transition-colors"
                     aria-label="Edit transaction"
                   >
                     <Pencil size={15} />
                   </button>
                   <button
                     onClick={() => onDelete(t.id)}
-                    className="rounded-md p-1.5 text-stone-500 hover:bg-red-600/15 hover:text-red-600"
+                    className="rounded-md p-1.5 text-stone-500 hover:bg-red-600/15 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-950/60 dark:hover:text-red-400 transition-colors"
                     aria-label="Delete transaction"
                   >
                     <Trash2 size={15} />

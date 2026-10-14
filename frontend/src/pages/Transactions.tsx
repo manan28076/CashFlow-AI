@@ -158,20 +158,20 @@ export const Transactions = () => {
       )}
 
       {/* SECTION 2 (LOWER HALF / BELOW IT): TRANSACTIONS MANAGEMENT */}
-      <Card className="flex flex-col gap-5 border border-stone-200/90 bg-white p-5 sm:p-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-100 pb-4">
+      <Card className="flex flex-col gap-5 border border-stone-200/90 dark:border-blue-900/40 p-5 sm:p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-100 dark:border-slate-800/80 pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600 shadow-2xs">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 shadow-2xs">
               <ArrowLeftRight size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-stone-900">All Transactions</h2>
-                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-600">
+                <h2 className="text-lg font-bold text-stone-900 dark:text-white">All Transactions</h2>
+                <span className="rounded-full bg-stone-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-semibold text-stone-600 dark:text-slate-300">
                   Page {currentPage} of {totalPages || 1}
                 </span>
               </div>
-              <p className="text-xs text-stone-500">
+              <p className="text-xs text-stone-500 dark:text-slate-400">
                 Filter, search, review, and manually manage income and expenses
               </p>
             </div>

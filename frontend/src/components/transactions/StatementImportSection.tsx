@@ -180,21 +180,21 @@ export const StatementImportSection = ({ onImportSuccess }: StatementImportSecti
   const duplicateTransactionsCount = transactions.filter((t) => t.duplicate).length;
 
   return (
-    <Card className="flex flex-col gap-4 border border-stone-200/90 bg-white p-5 sm:p-6 shadow-xs">
+    <Card className="flex flex-col gap-4 border border-stone-200/90 dark:border-blue-900/40 bg-white dark:bg-[#111c35] p-5 sm:p-6 shadow-xs">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 dark:border-slate-800/80 pb-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600 shadow-2xs">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 shadow-2xs">
             <UploadCloud size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-stone-900">Import Statement</h2>
-              <span className="rounded-full bg-orange-50 px-2 py-0.5 text-xs font-semibold text-orange-700">
+              <h2 className="text-lg font-bold text-stone-900 dark:text-white">Import Statement</h2>
+              <span className="rounded-full bg-orange-50 dark:bg-orange-950/70 text-orange-700 dark:text-orange-300 border border-orange-200/60 dark:border-orange-800/60 px-2 py-0.5 text-xs font-semibold">
                 PDF / Excel / CSV
               </span>
             </div>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-stone-500 dark:text-slate-400">
               Upload bank or UPI statements &mdash; AI automatically parses, categorizes, and checks duplicates
             </p>
           </div>
@@ -202,7 +202,7 @@ export const StatementImportSection = ({ onImportSuccess }: StatementImportSecti
 
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-1.5 text-xs font-medium text-stone-500 hover:text-stone-800 self-start sm:self-auto cursor-pointer"
+          className="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-slate-400 hover:text-stone-800 dark:hover:text-white self-start sm:self-auto cursor-pointer"
         >
           <span>{isExpanded ? "Collapse" : "Expand Uploader"}</span>
           {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
@@ -218,23 +218,23 @@ export const StatementImportSection = ({ onImportSuccess }: StatementImportSecti
                 {...getRootProps()}
                 className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors md:p-8 ${
                   isDragActive
-                    ? "border-orange-500 bg-orange-50/50"
-                    : "border-stone-300 hover:border-orange-400 hover:bg-stone-50/50"
+                    ? "border-orange-500 bg-orange-50/50 dark:bg-orange-950/40"
+                    : "border-stone-300 dark:border-blue-900/60 hover:border-orange-400 dark:hover:border-blue-500 hover:bg-stone-50/50 dark:hover:bg-[#0c1426]"
                 }`}
               >
                 <input {...getInputProps()} />
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-950/80 text-orange-600 dark:text-orange-400">
                   <UploadCloud size={24} />
                 </div>
-                <p className="text-sm font-semibold text-stone-800">
+                <p className="text-sm font-semibold text-stone-800 dark:text-white">
                   {file ? file.name : "Drag and drop your statement file here, or browse"}
                 </p>
-                <p className="mt-1 text-xs text-stone-500">
+                <p className="mt-1 text-xs text-stone-500 dark:text-slate-400">
                   Supports PDF, CSV, XLSX, and XLS (Max 10 MB, up to 40 pages)
                 </p>
                 {file && (
-                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-stone-100 px-3 py-1.5 text-xs text-stone-700">
-                    <FileText size={14} className="text-orange-600" />
+                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-stone-100 dark:bg-slate-800 px-3 py-1.5 text-xs text-stone-700 dark:text-slate-200">
+                    <FileText size={14} className="text-orange-600 dark:text-orange-400" />
                     <span>{(file.size / 1024).toFixed(1)} KB</span>
                   </div>
                 )}
@@ -242,8 +242,8 @@ export const StatementImportSection = ({ onImportSuccess }: StatementImportSecti
 
               {/* Action buttons & privacy note */}
               <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-2 text-xs text-stone-500">
-                  <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-slate-400">
+                  <ShieldCheck size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>
                     <strong>Privacy First:</strong> Statements are processed in-memory by AI. Files are never stored on disk.
                   </span>
@@ -252,7 +252,7 @@ export const StatementImportSection = ({ onImportSuccess }: StatementImportSecti
                   <button
                     type="button"
                     onClick={() => setShowGuide(!showGuide)}
-                    className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 cursor-pointer mr-1"
+                    className="flex items-center gap-1 text-xs text-stone-500 dark:text-slate-400 hover:text-stone-800 dark:hover:text-white cursor-pointer mr-1"
                   >
                     <HelpCircle size={14} />
                     <span>Bank guide</span>

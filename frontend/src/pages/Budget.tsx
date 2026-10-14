@@ -304,8 +304,8 @@ export const Budget = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-stone-900">Budget</h1>
-          <p className="text-sm text-stone-500">
+          <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-white">Budget</h1>
+          <p className="text-sm text-stone-500 dark:text-slate-400">
             Set and track spending limits by monthly total or per category
           </p>
         </div>
@@ -313,7 +313,7 @@ export const Budget = () => {
           <Button
             onClick={handleOpenMonthlyBudgetModal}
             variant="secondary"
-            className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-medium"
+            className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-medium dark:border-blue-800/60 dark:text-blue-300 dark:hover:bg-blue-950/70"
           >
             <Target size={16} />
             {isCustomMonthlyBudget ? "Edit Monthly Budget" : "Set Monthly Budget"}
@@ -327,8 +327,8 @@ export const Budget = () => {
 
       {/* Focus Month Selector Pills */}
       {availableMonths.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 text-sm scrollbar-thin">
-          <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider shrink-0 mr-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 text-sm scrollbar-thin scrollbar-thumb-stone-200 dark:scrollbar-thumb-slate-800">
+          <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider shrink-0 mr-1 dark:text-slate-400">
             Focus Month:
           </span>
           <button
@@ -337,10 +337,10 @@ export const Budget = () => {
               setFilterYear(null);
             }}
             className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0",
+              "px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer",
               filterMonth === null
-                ? "bg-stone-900 text-white shadow-xs font-semibold"
-                : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                ? "bg-stone-900 text-white shadow-xs font-semibold dark:bg-blue-600 dark:text-white"
+                : "bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
             )}
           >
             All Months
@@ -356,10 +356,10 @@ export const Budget = () => {
                   setFilterYear(m.year);
                 }}
                 className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 flex items-center gap-1.5",
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer",
                   isActive
-                    ? "bg-indigo-600 text-white shadow-xs font-semibold"
-                    : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                    ? "bg-indigo-600 text-white shadow-xs font-semibold dark:bg-blue-600 dark:text-white"
+                    : "bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                 )}
               >
                 <span>
@@ -371,7 +371,7 @@ export const Budget = () => {
                       "rounded-full px-1.5 py-0.2 text-[9px] font-bold uppercase",
                       isActive
                         ? "bg-indigo-400/40 text-white"
-                        : "bg-stone-200 text-stone-600"
+                        : "bg-stone-200 text-stone-600 dark:bg-slate-700 dark:text-slate-300"
                     )}
                   >
                     Now
@@ -384,7 +384,7 @@ export const Budget = () => {
       )}
 
       {/* TOP BOX: Dedicated Month Overall Budget Card */}
-      <Card className="bg-gradient-to-br from-stone-900 via-stone-850 to-stone-800 text-white border-none shadow-md p-5 sm:p-6">
+      <Card className="bg-gradient-to-br from-stone-900 via-stone-850 to-stone-800 dark:from-[#0b1329] dark:via-[#0e1a38] dark:to-[#11224d] text-white border-none dark:border dark:border-blue-900/50 shadow-md p-5 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap text-xs">
@@ -513,8 +513,8 @@ export const Budget = () => {
       {/* Category Section Header */}
       <div className="flex items-center justify-between pt-2">
         <div>
-          <h2 className="text-lg font-bold text-stone-900">Category Budgets</h2>
-          <p className="text-xs text-stone-500">
+          <h2 className="text-lg font-bold text-stone-900 dark:text-white">Category Budgets</h2>
+          <p className="text-xs text-stone-500 dark:text-slate-400">
             Set individual limits for specific categories like Food, Bills, Shopping, Travel, etc.
           </p>
         </div>

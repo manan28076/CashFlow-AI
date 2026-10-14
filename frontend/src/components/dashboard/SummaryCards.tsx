@@ -45,9 +45,9 @@ const getCardsConfig = (
     accentGradient: "from-orange-500 via-amber-500 to-yellow-500",
     borderColorHover: "hover:border-orange-300",
     shadowHover: "hover:shadow-orange-500/10",
-    bgWashHover: "hover:from-orange-50/40 hover:via-white hover:to-amber-50/20",
-    iconBg: "bg-orange-50",
-    iconColor: "text-orange-600",
+    bgWashHover: "hover:from-orange-50/40 hover:via-white hover:to-amber-50/20 dark:hover:from-orange-950/30 dark:hover:via-[#111c35] dark:hover:to-amber-950/20",
+    iconBg: "bg-orange-50 dark:bg-orange-950/60",
+    iconColor: "text-orange-600 dark:text-orange-400",
     iconHoverBg: "group-hover:bg-orange-600 group-hover:text-white",
     subtitle: "Net liquidity across accounts",
   },
@@ -57,11 +57,11 @@ const getCardsConfig = (
     icon: TrendingUp,
     to: "/transactions?type=INCOME",
     accentGradient: "from-emerald-500 via-teal-500 to-green-500",
-    borderColorHover: "hover:border-emerald-300",
+    borderColorHover: "hover:border-emerald-300 dark:hover:border-emerald-500/50",
     shadowHover: "hover:shadow-emerald-500/10",
-    bgWashHover: "hover:from-emerald-50/40 hover:via-white hover:to-teal-50/20",
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
+    bgWashHover: "hover:from-emerald-50/40 hover:via-white hover:to-teal-50/20 dark:hover:from-emerald-950/30 dark:hover:via-[#111c35] dark:hover:to-teal-950/20",
+    iconBg: "bg-emerald-50 dark:bg-emerald-950/60",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
     iconHoverBg: "group-hover:bg-emerald-600 group-hover:text-white",
     subtitle: "All-time inflows & earnings",
   },
@@ -71,11 +71,11 @@ const getCardsConfig = (
     icon: TrendingDown,
     to: "/transactions?type=EXPENSE",
     accentGradient: "from-rose-500 via-red-500 to-pink-500",
-    borderColorHover: "hover:border-rose-300",
+    borderColorHover: "hover:border-rose-300 dark:hover:border-rose-500/50",
     shadowHover: "hover:shadow-rose-500/10",
-    bgWashHover: "hover:from-rose-50/40 hover:via-white hover:to-red-50/20",
-    iconBg: "bg-rose-50",
-    iconColor: "text-rose-600",
+    bgWashHover: "hover:from-rose-50/40 hover:via-white hover:to-red-50/20 dark:hover:from-rose-950/30 dark:hover:via-[#111c35] dark:hover:to-rose-950/20",
+    iconBg: "bg-rose-50 dark:bg-rose-950/60",
+    iconColor: "text-rose-600 dark:text-rose-400",
     iconHoverBg: "group-hover:bg-rose-600 group-hover:text-white",
     subtitle: "All-time outflows & spend",
   },
@@ -85,11 +85,11 @@ const getCardsConfig = (
     icon: Calendar,
     to: "/transactions",
     accentGradient: "from-amber-500 via-orange-500 to-yellow-500",
-    borderColorHover: "hover:border-amber-300",
+    borderColorHover: "hover:border-amber-300 dark:hover:border-amber-500/50",
     shadowHover: "hover:shadow-amber-500/10",
-    bgWashHover: "hover:from-amber-50/40 hover:via-white hover:to-orange-50/20",
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
+    bgWashHover: "hover:from-amber-50/40 hover:via-white hover:to-orange-50/20 dark:hover:from-amber-950/30 dark:hover:via-[#111c35] dark:hover:to-orange-950/20",
+    iconBg: "bg-amber-50 dark:bg-amber-950/60",
+    iconColor: "text-amber-600 dark:text-amber-400",
     iconHoverBg: "group-hover:bg-amber-600 group-hover:text-white",
     subtitle: "Current billing cycle outflow",
   },
@@ -106,18 +106,18 @@ const getCardsConfig = (
         : "from-sky-500 to-blue-500",
     borderColorHover:
       budgetStatus === "Over budget"
-        ? "hover:border-red-300"
-        : "hover:border-sky-300",
+        ? "hover:border-red-300 dark:hover:border-red-500/50"
+        : "hover:border-sky-300 dark:hover:border-sky-500/50",
     shadowHover:
       budgetStatus === "Over budget"
         ? "hover:shadow-red-500/10"
         : "hover:shadow-sky-500/10",
     bgWashHover:
       budgetStatus === "Over budget"
-        ? "hover:from-red-50/40 hover:via-white hover:to-rose-50/20"
-        : "hover:from-sky-50/40 hover:via-white hover:to-blue-50/20",
-    iconBg: budgetStatus === "Over budget" ? "bg-red-50" : "bg-sky-50",
-    iconColor: budgetStatus === "Over budget" ? "text-red-600" : "text-sky-600",
+        ? "hover:from-red-50/40 hover:via-white hover:to-rose-50/20 dark:hover:from-red-950/30 dark:hover:via-[#111c35] dark:hover:to-rose-950/20"
+        : "hover:from-sky-50/40 hover:via-white hover:to-blue-50/20 dark:hover:from-sky-950/30 dark:hover:via-[#111c35] dark:hover:to-blue-950/20",
+    iconBg: budgetStatus === "Over budget" ? "bg-red-50 dark:bg-red-950/60" : "bg-sky-50 dark:bg-sky-950/60",
+    iconColor: budgetStatus === "Over budget" ? "text-red-600 dark:text-red-400" : "text-sky-600 dark:text-sky-400",
     iconHoverBg:
       budgetStatus === "Over budget"
         ? "group-hover:bg-red-600 group-hover:text-white"

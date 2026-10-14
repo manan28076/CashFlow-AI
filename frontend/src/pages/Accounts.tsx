@@ -138,10 +138,10 @@ export const Accounts = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-stone-900">
+          <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-white">
             Accounts & Categories
           </h1>
-          <p className="text-sm text-stone-500">
+          <p className="text-sm text-stone-500 dark:text-slate-400">
             Manage your linked bank accounts and spending categories in one place
           </p>
         </div>
@@ -149,7 +149,7 @@ export const Accounts = () => {
           <Button
             onClick={handleAddAccount}
             variant="secondary"
-            className="gap-2 border-stone-300 text-stone-700 hover:bg-stone-100 font-medium"
+            className="gap-2 font-medium"
           >
             <Plus size={16} />
             Add Account
@@ -162,14 +162,14 @@ export const Accounts = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone-200 pb-3">
+      <div className="flex items-center gap-2 border-b border-stone-200 dark:border-slate-800 pb-3">
         <button
           onClick={() => handleTabChange("all")}
           className={cn(
             "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
             activeTab === "all"
-              ? "bg-stone-900 text-white shadow-xs"
-              : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+              ? "bg-stone-900 text-white shadow-xs dark:bg-blue-600 dark:text-white"
+              : "bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-slate-800/70 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
           )}
         >
           <Layers size={14} />
@@ -180,8 +180,8 @@ export const Accounts = () => {
           className={cn(
             "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
             activeTab === "accounts"
-              ? "bg-stone-900 text-white shadow-xs"
-              : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+              ? "bg-stone-900 text-white shadow-xs dark:bg-blue-600 dark:text-white"
+              : "bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-slate-800/70 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
           )}
         >
           <Wallet size={14} />
@@ -192,8 +192,8 @@ export const Accounts = () => {
           className={cn(
             "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
             activeTab === "categories"
-              ? "bg-stone-900 text-white shadow-xs"
-              : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+              ? "bg-stone-900 text-white shadow-xs dark:bg-blue-600 dark:text-white"
+              : "bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-slate-800/70 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
           )}
         >
           <Tag size={14} />
@@ -203,20 +203,20 @@ export const Accounts = () => {
 
       {/* SECTION 1: BANK ACCOUNTS */}
       {showAccounts && (
-        <Card className="flex flex-col gap-4 border border-stone-200/90 bg-white p-5 sm:p-6 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 pb-4">
+        <Card className="flex flex-col gap-4 border border-stone-200/90 dark:border-blue-900/40 p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 dark:border-slate-800/80 pb-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-blue-950/70 text-indigo-600 dark:text-blue-400">
                 <Building2 size={20} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-stone-900">Bank Accounts</h2>
-                  <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                  <h2 className="text-lg font-bold text-stone-900 dark:text-white">Bank Accounts</h2>
+                  <span className="rounded-full bg-indigo-50 dark:bg-blue-950/70 text-indigo-700 dark:text-blue-300 border border-indigo-200/60 dark:border-blue-800/60 px-2 py-0.5 text-xs font-semibold">
                     {accounts.length} linked
                   </span>
                 </div>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-stone-500 dark:text-slate-400">
                   Accounts used to track transactions, statements, and balances
                 </p>
               </div>
@@ -266,20 +266,20 @@ export const Accounts = () => {
 
       {/* SECTION 2: CATEGORIES */}
       {showCategories && (
-        <Card className="flex flex-col gap-4 border border-stone-200/90 bg-white p-5 sm:p-6 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 pb-4">
+        <Card className="flex flex-col gap-4 border border-stone-200/90 dark:border-blue-900/40 p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 dark:border-slate-800/80 pb-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400">
                 <Tag size={20} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-stone-900">Spending & Income Categories</h2>
-                  <span className="rounded-full bg-orange-50 px-2 py-0.5 text-xs font-semibold text-orange-700">
+                  <h2 className="text-lg font-bold text-stone-900 dark:text-white">Spending & Income Categories</h2>
+                  <span className="rounded-full bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border border-orange-200/60 dark:border-orange-800/60 px-2 py-0.5 text-xs font-semibold">
                     {categories.length} categories
                   </span>
                 </div>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-stone-500 dark:text-slate-400">
                   Labels used to classify your transactions for budgeting, analytics, and AI reports
                 </p>
               </div>
