@@ -192,8 +192,14 @@ export const Settings = () => {
         setIsProcessingPayment(false);
       });
       rzp.open();
+      // Reset button state once checkout modal is launched
+      setIsProcessingPayment(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to initiate Razorpay checkout");
+      const errorMsg =
+        err?.message === "Network Error"
+          ? "Cannot connect to backend server at localhost:5000. Please ensure the backend is running."
+          : err?.message || "Failed to initiate Razorpay checkout";
+      toast.error(errorMsg);
       setIsProcessingPayment(false);
     }
   };
