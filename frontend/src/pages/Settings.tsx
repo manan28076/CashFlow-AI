@@ -976,11 +976,16 @@ export const Settings = () => {
                 <Sparkles size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-bold">
-                  {selectedUpgradeTier === "pro" ? "Upgrade to Pro Copilot" : "Upgrade to Wealth & Family"}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold">
+                    {selectedUpgradeTier === "pro" ? "Upgrade to Pro Copilot" : "Upgrade to Wealth & Family"}
+                  </h3>
+                  <span className="rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold">
+                    Test Mode
+                  </span>
+                </div>
                 <span className="text-xs text-stone-500 dark:text-slate-400">
-                  Instant activation • Cancel anytime
+                  Instant activation • Zero KYC needed in Test Mode
                 </span>
               </div>
             </div>
@@ -999,7 +1004,7 @@ export const Settings = () => {
                 </span>
               </div>
               <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
-                ✓ Includes 14-day money-back guarantee & priority parsing
+                ✓ Full database verification & automatic plan activation
               </p>
             </div>
 
