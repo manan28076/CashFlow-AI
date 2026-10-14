@@ -12,4 +12,9 @@ module.exports = {
     RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
     RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET,
+    AI_PRICE_PER_1M_INPUT_TOKENS: process.env.AI_PRICE_PER_1M_INPUT_TOKENS ? Number(process.env.AI_PRICE_PER_1M_INPUT_TOKENS) : null,
+    AI_PRICE_PER_1M_OUTPUT_TOKENS: process.env.AI_PRICE_PER_1M_OUTPUT_TOKENS ? Number(process.env.AI_PRICE_PER_1M_OUTPUT_TOKENS) : null,
+    AI_CALL_TIMEOUT_MS: process.env.AI_CALL_TIMEOUT_MS ? Number(process.env.AI_CALL_TIMEOUT_MS) : 20000,
+    AI_PROACTIVE_ENABLED: process.env.AI_PROACTIVE_ENABLED === "true",
+    AI_WEEKLY_CRON: process.env.AI_WEEKLY_CRON || "0 9 * * 1",
 };

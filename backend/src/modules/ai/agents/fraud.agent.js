@@ -1,13 +1,30 @@
-const { askGemini } = require("../services/gemini.service");
+const { z } = require("zod");
+const { callGemini } = require("../services/gemini.service");
 const { fraudPrompt } = require("../prompts/fraud.prompt");
-const { safeParseJSON } = require("../utils/jsonParser");
 
-const fraudAgent = async (transactions) => {
+const fraudOutputSchema = z.object({
+  risk: z.enum(["LOW", "MEDIUM", "HIGH"]).default("LOW"),
+  flaggedIds: z.array(z.number()).default([]),
+  reason: z.string().default("All charges appear normal and verified."),
+});
+
+const fraudAgent = async (transactions, userId) => {
+  if (!transactions || transactions.length === 0) {
+    return { risk: "LOW", flaggedIds: [], reason: "No transactions to analyze." };
+  }
+
   const prompt = fraudPrompt(transactions);
-  const response = await askGemini(prompt);
-  return safeParseJSON(response);
+  const result = await callGemini({
+    agentName: "fraud_agent",
+    contents: prompt,
+    zodSchema: fraudOutputSchema,
+    userId,
+  });
+
+  return result.data;
 };
 
 module.exports = {
   fraudAgent,
+  fraudOutputSchema,
 };

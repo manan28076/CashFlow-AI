@@ -139,3 +139,29 @@ Verified directly from `backend/node_modules/@google/genai` source (`dist/index.
 - `POST /api/ai/quick-add`: Must keep returning `{ amount, type, category, description, date, categoryId, categoryName }`.
 - `POST/GET /api/ai/live-audit`: Must keep returning `{ transactionCount, insights, budget, fraud, health }`.
 - Frontend `FraudCard.tsx`: Uses `data.risk`, `data.flaggedIds`, `data.reason`. Existing shape must remain intact.
+
+---
+
+## Phase 1: Structured Outputs + Observability Summary
+- **Central Gemini Wrapper (`services/gemini.service.js`)**:
+  - Integrated `callGemini({ agentName, model, contents, systemInstruction, responseSchema, zodSchema, userId, timeoutMs, maxRetries })`.
+  - Uses native `responseMimeType: "application/json"` and `responseSchema` (or converted from Zod schema via `z.toJSONSchema`).
+  - Includes automatic retry (up to 2 retries) with validation error feedback in prompt upon schema violation.
+  - Per-call configurable timeout (`AI_CALL_TIMEOUT_MS`, default 20s).
+  - Token usage extracted from `usageMetadata` (`promptTokenCount`, `candidatesTokenCount`, `totalTokenCount`).
+  - Logs every attempt (including errors and timeouts) to `AiCallLog`.
+- **Database Schema**:
+  - Added `AiCallLog` model to `schema.prisma`.
+  - Created migration `backend/prisma/migrations/20261014_add_ai_call_log/migration.sql`.
+  - Synchronized schema to Supabase with `npx prisma db push`.
+- **Cost Calculation**:
+  - Purely derived from environment variables `AI_PRICE_PER_1M_INPUT_TOKENS` and `AI_PRICE_PER_1M_OUTPUT_TOKENS`.
+  - Returns `null` if variables are not configured or invalid. Never hardcodes pricing.
+- **Agent Migrations**:
+  - All 10 existing agents (`category`, `fraud`, `insight`, `budget`, `health`, `router`, `sql`, `answer`, `quickadd`, `unified`) migrated to `callGemini` with typed Zod schemas.
+- **Metrics API**:
+  - `GET /api/ai/metrics` with optional query param `?days=` (validated by Zod, default 7).
+  - Aggregates total calls, successful calls, failed calls, success rate, token counts, estimated cost, and per-agent latency metrics (average and p95).
+- **Verification**:
+  - `backend/tests/ai.wrapper.test.js`: 7 subtests verifying wrapper retry, validation errors, timeouts, cost estimation, and database metrics aggregation.
+  - Total test suite: 14 passing tests, 0 failing. `npx prisma validate` passed.

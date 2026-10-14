@@ -25,6 +25,7 @@ model User {
   budgets               Budget[]
   monthlyBudgets        MonthlyBudget[]
   payments              SubscriptionPayment[]
+  aiCallLogs            AiCallLog[]
 }
 
 model SubscriptionPayment {
@@ -125,4 +126,23 @@ model MonthlyBudget {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, month, year])
+}
+
+model AiCallLog {
+  id               String   @id @default(cuid())
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  agent            String
+  model            String
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  latencyMs        Int      @default(0)
+  success          Boolean  @default(true)
+  errorType        String?
+  retries          Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([agent, createdAt])
 }

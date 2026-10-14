@@ -2,11 +2,13 @@ const express = require("express");
 
 const upload = require("./upload/upload.middleware");
 
-const { test, uploadStatement, ask, chat, parseQuickAdd, liveAudit } = require("./ai.controller");
+const { test, uploadStatement, ask, chat, parseQuickAdd, liveAudit, getMetrics } = require("./ai.controller");
 
 const { protect } = require("../../middlewares/auth.middleware");
 
 const router = express.Router();
+
+router.get("/metrics", protect, getMetrics);
 
 router.post("/test", protect, test);
 

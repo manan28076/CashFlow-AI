@@ -1,16 +1,25 @@
-const { askGemini } = require("../services/gemini.service");
+const { z } = require("zod");
+const { callGemini } = require("../services/gemini.service");
 const { sqlPrompt } = require("../prompts/sql.prompt");
-const { safeParseJSON } = require("../utils/jsonParser");
 const { assertSafeSelect } = require("../utils/sqlGuard");
+
+const sqlOutputSchema = z.object({
+  sql: z.string(),
+});
 
 const sqlAgent = async (question, userId) => {
   const prompt = sqlPrompt(question, userId);
-  const response = await askGemini(prompt);
-  const { sql } = safeParseJSON(response);
+  const result = await callGemini({
+    agentName: "sql_agent",
+    contents: prompt,
+    zodSchema: sqlOutputSchema,
+    userId,
+  });
 
-  return assertSafeSelect(sql, userId);
+  return assertSafeSelect(result.data.sql, userId);
 };
 
 module.exports = {
   sqlAgent,
+  sqlOutputSchema,
 };

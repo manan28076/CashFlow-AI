@@ -6,8 +6,8 @@ const { unifiedAgent } = require("./agents/unified.agent");
 const { askGemini } = require("./services/gemini.service");
 const prisma = require("../../lib/prisma");
 
-const testAI = async (transactions) => {
-  return runAI(transactions);
+const testAI = async (transactions, userId) => {
+  return runAI(transactions, userId);
 };
 
 const askQuestion = async (question, userId) => {
@@ -57,7 +57,7 @@ const chatWithAgent = async (message, userId) => {
       }
 
       // Synthesize concise answer from verified rows
-      const answer = await answerAgent(message, rows);
+      const answer = await answerAgent(message, rows, userId);
       return {
         intent: "DATA_QUERY",
         sql: unified.sql,
@@ -80,8 +80,88 @@ const chatWithAgent = async (message, userId) => {
   };
 };
 
+const { calculateCost } = require("./services/gemini.service");
+
+const getAIMetrics = async (userId, { days = 7 } = {}) => {
+  const sinceDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const logs = await prisma.aiCallLog.findMany({
+    where: {
+      userId,
+      createdAt: { gte: sinceDate },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const totalCalls = logs.length;
+  const successfulCalls = logs.filter((l) => l.success).length;
+  const successRate = totalCalls > 0 ? Number(((successfulCalls / totalCalls) * 100).toFixed(2)) : 100;
+
+  const totalPromptTokens = logs.reduce((sum, l) => sum + (l.promptTokens || 0), 0);
+  const totalCompletionTokens = logs.reduce((sum, l) => sum + (l.completionTokens || 0), 0);
+  const totalTokens = logs.reduce((sum, l) => sum + (l.totalTokens || 0), 0);
+
+  const estimatedCost = calculateCost({
+    promptTokens: totalPromptTokens,
+    completionTokens: totalCompletionTokens,
+  });
+
+  // Group by agent
+  const agentGroups = {};
+  for (const log of logs) {
+    if (!agentGroups[log.agent]) {
+      agentGroups[log.agent] = {
+        agent: log.agent,
+        calls: 0,
+        successCount: 0,
+        latencies: [],
+        totalTokens: 0,
+      };
+    }
+    const g = agentGroups[log.agent];
+    g.calls++;
+    if (log.success) g.successCount++;
+    g.latencies.push(log.latencyMs);
+    g.totalTokens += log.totalTokens || 0;
+  }
+
+  const perAgent = Object.values(agentGroups).map((g) => {
+    g.latencies.sort((a, b) => a - b);
+    const sum = g.latencies.reduce((a, b) => a + b, 0);
+    const avgLatencyMs = g.latencies.length > 0 ? Math.round(sum / g.latencies.length) : 0;
+    const p95Idx = Math.min(Math.floor(g.latencies.length * 0.95), g.latencies.length - 1);
+    const p95LatencyMs = g.latencies.length > 0 ? g.latencies[p95Idx] : 0;
+    const agentSuccessRate = g.calls > 0 ? Number(((g.successCount / g.calls) * 100).toFixed(2)) : 100;
+
+    return {
+      agent: g.agent,
+      calls: g.calls,
+      successRate: agentSuccessRate,
+      avgLatencyMs,
+      p95LatencyMs,
+      totalTokens: g.totalTokens,
+    };
+  });
+
+  return {
+    timeframeDays: days,
+    totalCalls,
+    successfulCalls,
+    failedCalls: totalCalls - successfulCalls,
+    successRate,
+    tokens: {
+      promptTokens: totalPromptTokens,
+      completionTokens: totalCompletionTokens,
+      totalTokens,
+    },
+    estimatedCostUsd: estimatedCost,
+    perAgent,
+  };
+};
+
 module.exports = {
   testAI,
   askQuestion,
   chatWithAgent,
+  getAIMetrics,
 };

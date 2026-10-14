@@ -1,15 +1,24 @@
-const { askGemini } = require("../services/gemini.service");
+const { z } = require("zod");
+const { callGemini } = require("../services/gemini.service");
 const { answerPrompt } = require("../prompts/answer.prompt");
-const { safeParseJSON } = require("../utils/jsonParser");
 
-const answerAgent = async (question, rows) => {
+const answerOutputSchema = z.object({
+  answer: z.string(),
+});
+
+const answerAgent = async (question, rows, userId) => {
   const prompt = answerPrompt(question, rows);
-  const response = await askGemini(prompt);
-  const { answer } = safeParseJSON(response);
+  const result = await callGemini({
+    agentName: "answer_agent",
+    contents: prompt,
+    zodSchema: answerOutputSchema,
+    userId,
+  });
 
-  return answer;
+  return result.data?.answer || "Based on your records, here are the results.";
 };
 
 module.exports = {
   answerAgent,
+  answerOutputSchema,
 };

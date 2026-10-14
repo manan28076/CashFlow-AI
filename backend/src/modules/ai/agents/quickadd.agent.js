@@ -1,7 +1,15 @@
-const { askGeminiStructured } = require("../services/gemini.service");
-const { safeParseJSON } = require("../utils/jsonParser");
+const { z } = require("zod");
+const { callGemini } = require("../services/gemini.service");
 
-const parseQuickAddPrompt = async (text, categoryNames) => {
+const quickAddOutputSchema = z.object({
+  amount: z.number().positive(),
+  type: z.enum(["EXPENSE", "INCOME"]).default("EXPENSE"),
+  category: z.string().default("Other"),
+  description: z.string().default("Transaction"),
+  date: z.string().default(() => new Date().toISOString().split("T")[0]),
+});
+
+const parseQuickAddPrompt = async (text, categoryNames, userId) => {
   const todayStr = new Date().toISOString().split("T")[0];
 
   const prompt = `
@@ -18,26 +26,20 @@ Extract:
 3. category: exactly one of the allowed categories that best fits (default to "Food" for food or "Other" if unclear)
 4. description: clean readable description / merchant name (e.g. "Zomato", "Chai", "Gift from Dad")
 5. date: "YYYY-MM-DD" (if user mentions "yesterday", "2 days ago", or a specific date, calculate it relative to today ${todayStr}; otherwise default to ${todayStr})
-
-Return strictly valid JSON:
-{
-  "amount": 450,
-  "type": "EXPENSE",
-  "category": "Food",
-  "description": "Zomato",
-  "date": "${todayStr}"
-}
 `;
 
-  const raw = await askGeminiStructured({
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    jsonMode: true,
+  const result = await callGemini({
+    agentName: "quickadd_agent",
+    contents: prompt,
+    zodSchema: quickAddOutputSchema,
+    userId,
     temperature: 0,
   });
 
-  return safeParseJSON(raw);
+  return result.data;
 };
 
 module.exports = {
   parseQuickAddPrompt,
+  quickAddOutputSchema,
 };

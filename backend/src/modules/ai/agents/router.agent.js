@@ -1,15 +1,24 @@
-const { askGemini } = require("../services/gemini.service");
+const { z } = require("zod");
+const { callGemini } = require("../services/gemini.service");
 const { routerPrompt } = require("../prompts/router.prompt");
-const { safeParseJSON } = require("../utils/jsonParser");
 
-const routerAgent = async (message) => {
+const routerOutputSchema = z.object({
+  intent: z.enum(["DATA_QUERY", "GENERAL_ADVICE"]).default("GENERAL_ADVICE"),
+});
+
+const routerAgent = async (message, userId) => {
   const prompt = routerPrompt(message);
-  const response = await askGemini(prompt);
-  const { intent } = safeParseJSON(response);
+  const result = await callGemini({
+    agentName: "router_agent",
+    contents: prompt,
+    zodSchema: routerOutputSchema,
+    userId,
+  });
 
-  return intent === "DATA_QUERY" ? "DATA_QUERY" : "GENERAL_ADVICE";
+  return result.data?.intent === "DATA_QUERY" ? "DATA_QUERY" : "GENERAL_ADVICE";
 };
 
 module.exports = {
   routerAgent,
+  routerOutputSchema,
 };

@@ -1,12 +1,13 @@
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiResponse = require("../../utils/apiResponse");
 const { parseCSV } = require("./parsers/statement.parser");
-const { testAI, askQuestion, chatWithAgent } = require("./ai.service");
+const { testAI, askQuestion, chatWithAgent, getAIMetrics } = require("./ai.service");
 const {
   testAISchema,
   uploadStatementSchema,
   askSchema,
   chatSchema,
+  metricsQuerySchema,
 } = require("./ai.validator");
 const { resolveCategoryId } = require("./utils/categoryMap");
 const {
@@ -15,7 +16,7 @@ const {
 
 const test = asyncHandler(async (req, res) => {
   const validatedData = testAISchema.parse(req.body);
-  const response = await testAI(validatedData.transactions);
+  const response = await testAI(validatedData.transactions, req.user?.id);
 
   return res.status(200).json(
     new ApiResponse(200, "AI response generated successfully", response)
@@ -29,7 +30,7 @@ const uploadStatement = asyncHandler(async (req, res) => {
 
   const { accountId } = uploadStatementSchema.parse(req.body);
   const transactions = await parseCSV(req.file.buffer);
-  const result = await testAI(transactions);
+  const result = await testAI(transactions, req.user?.id);
 
   const { indexed, categories, fraud, nameToId } = result;
 
@@ -91,7 +92,7 @@ const parseQuickAdd = asyncHandler(async (req, res) => {
   const categories = await prisma.category.findMany({ select: { id: true, name: true } });
   const categoryNames = categories.map((c) => c.name);
 
-  const parsed = await parseQuickAddPrompt(text.trim(), categoryNames);
+  const parsed = await parseQuickAddPrompt(text.trim(), categoryNames, req.user?.id);
   if (!parsed || !parsed.amount) {
     return res.status(400).json(new ApiResponse(400, "Could not understand the transaction details. Try typing e.g. 'zomato 350'"));
   }
@@ -139,7 +140,7 @@ const liveAudit = asyncHandler(async (req, res) => {
     type: t.type,
   }));
 
-  const result = await testAI(mappedTransactions);
+  const result = await testAI(mappedTransactions, req.user?.id);
 
   return res.status(200).json(
     new ApiResponse(200, "Live audit generated successfully", {
@@ -152,6 +153,15 @@ const liveAudit = asyncHandler(async (req, res) => {
   );
 });
 
+const getMetrics = asyncHandler(async (req, res) => {
+  const { days } = metricsQuerySchema.parse(req.query);
+  const metrics = await getAIMetrics(req.user.id, { days });
+
+  return res.status(200).json(
+    new ApiResponse(200, "AI call metrics retrieved successfully", metrics)
+  );
+});
+
 module.exports = {
   test,
   uploadStatement,
@@ -159,4 +169,5 @@ module.exports = {
   chat,
   parseQuickAdd,
   liveAudit,
+  getMetrics,
 };

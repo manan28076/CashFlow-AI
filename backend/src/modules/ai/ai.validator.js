@@ -22,9 +22,18 @@ const chatSchema = z.object({
   message: z.string().min(3, "message is required"),
 });
 
+const metricsQuerySchema = z.object({
+  days: z
+    .string()
+    .optional()
+    .transform((val) => (val ? Number(val) : 7))
+    .pipe(z.number().int().min(1).max(90)),
+});
+
 module.exports = {
   testAISchema,
   uploadStatementSchema,
   askSchema,
   chatSchema,
+  metricsQuerySchema,
 };
