@@ -136,75 +136,62 @@ export const Settings = () => {
       const cycle = isAnnual ? "annual" : "monthly";
       const orderData = await paymentService.createOrder(selectedUpgradeTier, cycle);
 
-      // If live Razorpay checkout is configured and window.Razorpay is present
-      if (typeof (window as any).Razorpay !== "undefined" && !orderData.isTestMode) {
-        const options = {
-          key: orderData.keyId,
-          amount: orderData.paise,
-          currency: orderData.currency || "INR",
-          name: "CashFlow AI",
-          description: `CashFlow ${orderData.plan} Plan (${orderData.billingCycle})`,
-          order_id: orderData.orderId,
-          handler: async function (response: any) {
-            try {
-              toast.loading("Verifying cryptographic signature on backend...", { id: "payment-verify" });
-              const verified = await paymentService.verifyPayment({
-                razorpayOrderId: response.razorpay_order_id || orderData.orderId,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-              });
-              updateUser(verified.user);
-              await fetchSubscriptionData();
-              setIsUpgradeModalOpen(false);
-              toast.success(`🎉 Payment verified! Welcome to CashFlow ${orderData.plan}!`, {
-                id: "payment-verify",
-                duration: 5000,
-              });
-            } catch (err: any) {
-              toast.error(err.message || "Payment verification failed", { id: "payment-verify" });
-            } finally {
-              setIsProcessingPayment(false);
-            }
-          },
-          prefill: {
-            name: user?.name || "Subscriber",
-            email: user?.email || "",
-          },
-          theme: {
-            color: "#ea580c",
-          },
-          modal: {
-            ondismiss: function () {
-              setIsProcessingPayment(false);
-              toast("Checkout window closed", { icon: "ℹ️" });
-            },
-          },
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.on("payment.failed", function (response: any) {
-          toast.error(`Payment failed: ${response.error?.description || "Transaction declined"}`);
-          setIsProcessingPayment(false);
-        });
-        rzp.open();
-      } else {
-        // Test verification fallback for local dev when RAZORPAY_KEY_SECRET is not yet added
-        toast.loading("Verifying transaction on server...", { id: "payment-verify" });
-        const dummyPaymentId = `pay_rzp_test_${Date.now()}`;
-        const verified = await paymentService.verifyPayment({
-          razorpayOrderId: orderData.orderId,
-          razorpayPaymentId: dummyPaymentId,
-          razorpaySignature: "mock_verified_signature",
-        });
-        updateUser(verified.user);
-        await fetchSubscriptionData();
-        setIsUpgradeModalOpen(false);
-        toast.success(`🎉 Payment verified! You are now on CashFlow ${orderData.plan}!`, {
-          id: "payment-verify",
-          duration: 5000,
-        });
+      // Ensure Razorpay SDK is loaded
+      if (typeof (window as any).Razorpay === "undefined") {
+        toast.error("Razorpay SDK failed to load. Please check your internet connection or disable adblockers.");
         setIsProcessingPayment(false);
+        return;
       }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.paise,
+        currency: orderData.currency || "INR",
+        name: "CashFlow AI",
+        description: `CashFlow ${orderData.plan} Plan (${orderData.billingCycle})`,
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          try {
+            toast.loading("Verifying cryptographic signature on backend...", { id: "payment-verify" });
+            const verified = await paymentService.verifyPayment({
+              razorpayOrderId: response.razorpay_order_id || orderData.orderId,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+            updateUser(verified.user);
+            await fetchSubscriptionData();
+            setIsUpgradeModalOpen(false);
+            toast.success(`🎉 Payment verified! Welcome to CashFlow ${orderData.plan}!`, {
+              id: "payment-verify",
+              duration: 5000,
+            });
+          } catch (err: any) {
+            toast.error(err.message || "Payment verification failed", { id: "payment-verify" });
+          } finally {
+            setIsProcessingPayment(false);
+          }
+        },
+        prefill: {
+          name: user?.name || "Subscriber",
+          email: user?.email || "",
+        },
+        theme: {
+          color: "#ea580c",
+        },
+        modal: {
+          ondismiss: function () {
+            setIsProcessingPayment(false);
+            toast("Checkout window closed", { icon: "ℹ️" });
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        toast.error(`Payment failed: ${response.error?.description || "Transaction declined"}`);
+        setIsProcessingPayment(false);
+      });
+      rzp.open();
     } catch (err: any) {
       toast.error(err.message || "Failed to initiate Razorpay checkout");
       setIsProcessingPayment(false);
