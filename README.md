@@ -127,6 +127,73 @@ sequenceDiagram
 
 ---
 
+### Autonomous Multi-Turn Tool-Calling Finance Agent (`POST /api/ai/agent`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 👤 User
+    participant Frontend as 💻 React 19 Frontend
+    participant API as 🛡️ Express API Gateway
+    participant Agent as 🤖 Finance Tool-Calling Agent
+    participant Wrapper as ⚙️ Central Gemini Wrapper
+    participant Registry as 🧰 Deterministic Tool Registry
+    participant DB as 🗄️ PostgreSQL (Read-Only CTE / Pending Action)
+
+    User->>Frontend: "Can you create a dining budget of ₹8,000 for this month?"
+    Frontend->>API: POST /api/ai/agent { message }
+    API->>Agent: Run Multi-Turn ReAct Loop (Max 6 Iterations)
+    Agent->>Wrapper: callGemini(contents, tools: [create_budget, run_sql, ...])
+    Wrapper-->>Agent: FunctionCall: create_budget(category="Dining Out", limit=8000)
+    Agent->>Registry: Execute Tool: create_budget (Write Tool)
+    Note over Registry: Write-tools stage a pending action.<br/>Never execute directly without confirmation!
+    Registry->>DB: Stage in PendingAiAction (TTL: 10m, Status: PENDING)
+    DB-->>Registry: { actionId: "uuid", expiresAt }
+    Registry-->>Agent: { pendingAction: { actionId, summary, expiresAt } }
+    Agent->>Wrapper: Re-prompt with tool response
+    Wrapper-->>Agent: "I have prepared the budget creation. Please confirm."
+    Agent-->>API: { answer, steps: [...], pendingActions: [...] }
+    API-->>Frontend: Render answer with Confirm / Cancel action card
+    User->>Frontend: Click "Confirm Action"
+    Frontend->>API: POST /api/ai/agent/confirm { actionId }
+    API->>DB: Validate User Scoping & Execute Idempotent Prisma Write
+    DB-->>API: Success
+    API-->>Frontend: "Budget successfully created!"
+```
+
+---
+
+### India Tax Knowledge RAG & Weekly Proactive Cron Architecture
+
+```mermaid
+flowchart TD
+    subgraph KnowledgeIngestion [India Tax Knowledge RAG Engine]
+        A1[📄 Official Income Tax Docs incometax.gov.in] --> A2[Markdown Parser & YAML Front-Matter Validator]
+        A2 --> A3[Paragraph Boundary Chunker ~900 chars + 150 char overlap]
+        A3 --> A4[Gemini text-embedding-004 via Wrapper]
+        A4 --> A5[(KnowledgeChunk Table in PostgreSQL)]
+        
+        Q1[User Tax Query] --> Q2[Embed Query]
+        Q2 --> Q3[In-Memory Cosine Similarity Top-K Engine]
+        A5 --> Q3
+        Q3 --> Q4{Score >= 0.55?}
+        Q4 -- Yes --> Q5[Synthesize Answer with Mandatory Front-Matter Citations]
+        Q4 -- No / Empty KB --> Q6[Truthful Refusal: 'Knowledge base is empty / not found']
+    end
+
+    subgraph ProactiveDaemon [Weekly Proactive Autonomous Agent]
+        W1[node-cron Scheduler / External Webhook Trigger] --> W2[Proactive Worker Loop]
+        W2 --> W3[Deterministic Math: Budget Burn Rate vs Elapsed Days]
+        W2 --> W4[Deterministic Math: Week-over-Week Category Shift]
+        W2 --> W5[Hybrid Anomaly Engine: Modified Z-Score & Duplicates]
+        W3 & W4 & W5 --> W6[Gemini Wrapper: Phrase Structured Human Summary]
+        W6 --> W7[(Idempotent Notification Table: unique userId+type+weekKey)]
+        W7 --> W8[Interactive Dashboard Notification Dropdown]
+    end
+```
+
+---
+
 ### Fintech Subscription & Payment Verification Flow
 
 ```mermaid
@@ -167,15 +234,16 @@ sequenceDiagram
 | Domain | Technologies | Details |
 |---|---|---|
 | **Frontend** | React 19, TypeScript, Vite, Tailwind CSS | Single-page application, custom theme engine, responsive design |
-| **Icons & UI** | Lucide React, Framer Motion, Canvas Confetti | Clean micro-interactions and smooth transitions |
-| **Backend** | Node.js (v20+ LTS), Express.js | Modular REST architecture, custom AppError hierarchy, async handlers |
+| **Icons & UI** | Lucide React, Framer Motion, Canvas Confetti | Clean micro-interactions, collapsible tool execution visualizer, pending action cards |
+| **Backend** | Node.js (v20+ LTS), Express.js (v5) | Modular REST architecture, custom AppError hierarchy, async handlers, zero unhandled rejections |
 | **Database & ORM** | PostgreSQL 16 (Supabase), Prisma ORM v6 | Connection pooling via PgBouncer, strict relational schema |
-| **AI / LLM** | Google Gemini 2.5 Flash API | Multi-agent analysis, structured JSON outputs, Text-to-SQL |
+| **AI / LLM** | `@google/genai` (v2.15.0 SDK), Gemini 3.8 Flash, text-embedding-004 | Native structured JSON outputs, function calling, deterministic cost tracking |
+| **Math & Anomaly** | Pure JS Statistics | Modified Z-Score ($M_i = 0.6745 \cdot |x - \text{median}| / \text{MAD}$), IQR fallback, 24h exact window deduplication |
 | **Payments** | Razorpay Node SDK, Razorpay Checkout.js | PCI-DSS Level 1 compliant, UPI, Cards, Netbanking |
-| **Security** | Crypto (HMAC-SHA256), Helmet, CORS, Rate Limiting, JWT | Zero-trust authentication, cryptographic signature validation |
-| **Scheduled Jobs**| Node-Cron | Hourly automated subscription lifecycle worker |
+| **Security** | Crypto (HMAC-SHA256), Helmet, CORS, Rate Limiting, JWT | Zero-trust authentication, cryptographic signature validation, CTE SQL sandboxing |
+| **Scheduled Jobs**| Node-Cron | Automated subscription expiration daemon & weekly proactive financial report worker |
 | **PDF Invoicing** | jsPDF, html2canvas | Client-side 18% GST tax invoice synthesis |
-| **Testing** | Node.js Native Test Runner, Assert | Automated unit test suites for payment fraud protection & deduplication |
+| **Testing** | Node.js Native Test Runner (`node --test`), Assert | 113 comprehensive automated unit & integration tests across 39 suites |
 
 ---
 
@@ -188,14 +256,24 @@ sequenceDiagram
 | `POST` | `/api/auth/login` | Authenticate credentials and receive signed JWT | ❌ |
 | `POST` | `/api/auth/google` | OAuth 2.0 Google Sign-In verification | ❌ |
 
-### 2. Multi-Agent AI Core (`/api/ai`)
+### 2. Multi-Agent AI Core & Observability (`/api/ai`)
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|:---:|
-| `POST` | `/api/ai/upload` | Ingest bank statement CSV & dispatch 5-agent parallel analysis | ✅ |
-| `POST` | `/api/ai/ask` | Natural language Text-to-SQL query engine over user's transactions | ✅ |
-| `POST` | `/api/ai/chat` | Conversational financial copilot with contextual intent routing | ✅ |
+| `POST` | `/api/ai/upload` | Ingest bank statement CSV & dispatch 5-agent parallel analysis with merchant memory caching | ✅ |
+| `POST` | `/api/ai/ask` | Hardened Text-to-SQL query engine over user's transactions with CTE isolation | ✅ |
+| `POST` | `/api/ai/chat` | Conversational financial copilot with contextual intent routing (fallback) | ✅ |
+| `POST` | `/api/ai/agent` | Autonomous tool-calling financial assistant with execution steps and pending write actions | ✅ |
+| `POST` | `/api/ai/agent/confirm` | Execute staged write actions (`add_transaction`, `create_budget`) with user verification | ✅ |
+| `GET` | `/api/ai/metrics` | Observability metrics: token usage, latency percentiles (avg/p95), success rate, and dynamic cost | ✅ |
+| `POST` | `/api/ai/proactive/run` | Protected manual/webhook trigger for weekly proactive report generation (`x-cron-secret`) | ❌ *(Secret)* |
 
-### 3. Fintech Payment & Subscription (`/api/payment`)
+### 3. Proactive Notifications (`/api/notifications`)
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|:---:|
+| `GET` | `/api/notifications` | Fetch paginated proactive notifications with optional unread filter (`?unread=true`) | ✅ |
+| `PATCH`| `/api/notifications/:id/read` | Mark a proactive notification as read | ✅ |
+
+### 4. Fintech Payment & Subscription (`/api/payment`)
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|:---:|
 | `POST` | `/api/payment/create-order` | Create Razorpay order & record pending transaction in database | ✅ |
@@ -204,11 +282,12 @@ sequenceDiagram
 | `POST` | `/api/payment/cancel` | Immediately cancel Pro subscription and revert user to Starter tier | ✅ |
 | `POST` | `/api/payment/webhook` | Server-to-server webhook endpoint with raw body signature check | ❌ *(Signed)* |
 
-### 4. Transactions, Accounts & Budgets
+### 5. Transactions, Accounts & Budgets
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|:---:|
 | `GET` | `/api/transactions` | Paginated transactions with search, category filtering & sorting | ✅ |
 | `POST` | `/api/transactions` | Create single manual transaction | ✅ |
+| `PATCH`| `/api/transactions/:id` | Update transaction details (category update dynamically creates `USER` merchant rule) | ✅ |
 | `GET` | `/api/accounts` | Retrieve user checking, savings, and investment accounts | ✅ |
 | `POST` | `/api/accounts` | Provision new financial account with starting balance | ✅ |
 | `GET` | `/api/budgets` | Fetch monthly envelope budgets with live actual-spend progress | ✅ |
@@ -219,35 +298,25 @@ sequenceDiagram
 
 ## 🧪 Automated Test Suite
 
-CashFlow AI includes automated fintech unit tests verifying cryptographic integrity, fraud resistance, and statement deduplication:
+CashFlow AI features an end-to-end, zero-dependency automated test suite executed via the native Node.js test runner (`node --test`), thoroughly asserting cryptographic verification, AI guardrails, merchant memory, statistical anomaly isolation, hardened SQL firewalling, evaluation scoring, and tax RAG retrieval:
 
 ```bash
 cd backend
 npm test
 ```
 
-### Test Suite Output:
+### Verified Test Suite Execution:
 ```text
 TAP version 13
-# Subtest: Zero-Duplicate Transaction Engine & Cryptographic Deduplication
-    ok 1 - should generate identical hash for duplicate bank statement transactions
-    ok 2 - should generate distinct hashes for legitimate repeated charges on different days
-    ok 3 - should generate distinct hashes for different amounts with same merchant on same day
-ok 1 - Zero-Duplicate Transaction Engine & Cryptographic Deduplication (13ms)
-
-# Subtest: Fintech Payment Security & Razorpay Cryptographic Verification
-    ok 1 - should generate and verify authentic HMAC-SHA256 signature for client checkout
-    ok 2 - should strictly reject tampered payment IDs or modified order IDs (Fraud Protection)
-    ok 3 - should calculate accurate subscription duration (30 days vs 365 days)
-    ok 4 - should verify server-to-server webhook raw body signature matching Razorpay specification
-ok 2 - Fintech Payment Security & Razorpay Cryptographic Verification (7ms)
-
-1..2
-# tests 7
-# suites 2
-# pass 7
+# tests 113
+# suites 39
+# pass 113
 # fail 0
+# cancelled 0
+# skipped 0
+# todo 0
 ```
+*Includes: Statement Deduplication, Razorpay Signature Verification, Central Gemini Wrapper & Observability, Merchant Memory Normalization & Caching, Modified Z-Score & Anomaly Math, Hardened SQL Security & CTE Tenant Scoping, Multi-Turn Tool-Calling Loop, Evaluation Scoring Algorithms, Weekly Proactive Cron Idempotency, Observability Hygiene, and India Tax RAG Retrieval.*
 
 ---
 
@@ -281,11 +350,22 @@ Create a `.env` file in `backend/`:
 PORT=5000
 DATABASE_URL="postgresql://user:password@host:6543/postgres?pgbouncer=true"
 DIRECT_URL="postgresql://user:password@host:5432/postgres"
+DATABASE_URL_EVAL="postgresql://user:password@host:5432/postgres_eval" # Isolated database for eval runner
 JWT_SECRET="your_strong_jwt_secret_key"
 GEMINI_API_KEY="your_google_gemini_api_key"
 RAZORPAY_KEY_ID="rzp_test_YourKeyIdHere"
 RAZORPAY_KEY_SECRET="YourRazorpaySecretHere"
 RAZORPAY_WEBHOOK_SECRET="YourRazorpayWebhookSecretHere"
+
+# AI Observability, Cost & Timeout
+AI_PRICE_PER_1M_INPUT_TOKENS=0.15
+AI_PRICE_PER_1M_OUTPUT_TOKENS=0.60
+AI_CALL_TIMEOUT_MS=20000
+
+# Proactive Weekly Report Agent
+AI_PROACTIVE_ENABLED=false
+AI_WEEKLY_CRON="0 9 * * 1"
+AI_PROACTIVE_CRON_SECRET="your_cron_secret_or_admin_key"
 ```
 
 Deploy database schema & seed initial categories:
@@ -296,16 +376,9 @@ npx prisma db seed
 
 Start the backend server:
 ```bash
-*Backend will run at `http://localhost:5000` with the automated subscription cron daemon initialized.*
-
-> ⚠️ **Render Free Tier & In-Process Cron Notice**:
-> Render's free container tier automatically spins down (sleeps) after 15 minutes of inactivity. When asleep, in-process timers like `node-cron` (`subscriptionCron`, `proactiveCron`) will not fire.
-> **External Trigger Alternative**: To guarantee deterministic execution on free-tier hosting, trigger the protected endpoint using an external runner (e.g. GitHub Actions, cron-job.org):
-> ```bash
-> curl -X POST https://your-app.onrender.com/api/ai/proactive/run \
->   -H "x-cron-secret: <AI_PROACTIVE_CRON_SECRET>"
-> ```
-
+npm run dev
+```
+*Backend will run at `http://localhost:5000` with the automated subscription and proactive cron daemons initialized.*
 
 ---
 
@@ -329,15 +402,28 @@ npm run dev
 
 ---
 
+## ⚠️ Known Limitations & Operational Considerations
+
+1. **Free-Tier In-Process Cron Inactivity**: Render free-tier containers automatically sleep after 15 minutes of inactivity. While sleeping, internal `node-cron` timers (`subscriptionCron`, `proactiveCron`) will not fire. For production or 24/7 reliability, configure an external scheduler (GitHub Actions, cron-job.org) to ping the protected endpoint:
+   ```bash
+   curl -X POST https://your-app.onrender.com/api/ai/proactive/run \
+     -H "x-cron-secret: <AI_PROACTIVE_CRON_SECRET>"
+   ```
+2. **India Tax Knowledge RAG Base**: Under strict anti-hallucination guardrails, tax rules, limits, section slabs, and deadlines are **never generated from LLM memory**. Official documents must be placed into `backend/knowledge/in-tax/` with validated front-matter (`title`, `sourceUrl`, `financialYear`, `retrievedOn`). When the corpus directory is empty, the RAG tool truthfully responds that the knowledge base is empty and provides a disclaimer.
+3. **Execution-Based Evaluation Database Separation**: The evaluation runner (`npm run eval`) asserts SQL query correctness against database state. To prevent polluting developer or production data, the eval runner refuses to execute unless `DATABASE_URL_EVAL` is explicitly configured and distinct from `DATABASE_URL`.
+4. **Deterministic Math Principle**: All monetary arithmetic, modified z-score calculations, moving-average spending forecasts, and budget burn-rates are computed in deterministic TypeScript/JavaScript engines. LLMs only phrase structured human-readable explanations around pre-computed verified values.
+
+---
+
 ## 🔐 Security & Data Governance
 
 | Threat Model | Engineering Mitigation |
 |---|---|
-| **Cross-Tenant Data Exposure** | All Prisma queries are strictly scoped by verified JWT `userId`. No endpoint allows foreign key substitution. |
-| **SQL Injection via AI** | Gemini-generated SQL is validated by a strict parser: must start with `SELECT`, blocklists all write keywords (`DROP`, `INSERT`, `UPDATE`), and enforces `userId` scoping literals. |
+| **Cross-Tenant Data Exposure** | All Prisma queries are strictly scoped by verified JWT `userId`. The SQL engine wraps all allowed tables in bound Common Table Expressions (`WITH "Transaction" AS (SELECT * FROM "Transaction" WHERE "userId" = $1)`), structurally preventing cross-tenant leakage even if the model hallucinates a query. |
+| **SQL Injection via AI** | Gemini-generated SQL is validated by a hardened AST/Regex firewall: single statement only, reject comments (`--`, `/*`), reject semicolons, word-boundary blocklist (`DROP`, `DELETE`, `ALTER`), function allowlist, and mandatory read-only transaction mode (`SET LOCAL statement_timeout = 5000ms`). |
 | **Payment Signature Tampering** | Payment verifications recompute HMAC-SHA256 digests on the server using `RAZORPAY_KEY_SECRET`. Mock or altered IDs trigger immediate database rejection. |
-| **Webhook Replay Attacks** | Webhook listener validates Razorpay header signatures against raw request bodies before processing state updates. |
-| **Card Data Security** | Zero credit card or banking credentials touch our application servers. All payment transactions run inside Razorpay's PCI-DSS Level 1 iframe sandbox. |
+| **Unauthorized Autonomous Actions** | The tool-calling financial agent cannot execute destructive writes (`add_transaction`, `create_budget`) on its own. All write tools return a staged `PendingAiAction` (10-minute TTL) requiring explicit user confirmation via `POST /api/ai/agent/confirm`. |
+| **Card Data Security** | Zero credit card or banking credentials touch application servers. All payment transactions run inside Razorpay's PCI-DSS Level 1 iframe sandbox. |
 
 ---
 
@@ -346,40 +432,46 @@ npm run dev
 ```
 CashFlow-AI/
 ├── backend/
+│   ├── evals/                    # Execution-based evaluation harness
+│   │   ├── datasets/             # Benchmarks (text2sql, categorization, anomaly, agent)
+│   │   ├── fixtures/             # Deterministic seed script (seedEval.js)
+│   │   ├── runner.js             # CLI eval runner (npm run eval)
+│   │   └── scoring.js            # Semantic result-set comparison & metric tracking
+│   ├── knowledge/
+│   │   └── in-tax/               # India tax knowledge base markdown corpus
 │   ├── prisma/
-│   │   ├── schema.prisma         # Database schema (User, Transaction, Account, SubscriptionPayment)
-│   │   └── seed.js               # Seed script for initial categories & demo data
+│   │   ├── migrations/           # Version-controlled database migrations
+│   │   ├── schema.prisma         # Models (User, Transaction, MerchantRule, AiCallLog, Notification, etc.)
+│   │   └── seed.js               # Category and demographic seed data
+│   ├── scripts/
+│   │   └── ingestKnowledge.js    # Knowledge base chunking & embedding ingestion CLI
 │   ├── src/
 │   │   ├── config/               # Environment & database connection configs
-│   │   ├── errors/               # Centralized AppError and exception handling
-│   │   ├── jobs/                 # Cron workers (subscription expiration daemon)
+│   │   ├── errors/               # Centralized AppError hierarchy
+│   │   ├── jobs/                 # Cron workers (subscriptionCron, proactiveCron)
 │   │   ├── middleware/           # Auth, rate-limiter, error-handler, validation
 │   │   ├── modules/
-│   │   │   ├── account/          # Account balances & provisioning
-│   │   │   ├── ai/               # 5-Agent ingestion pipeline & Text-to-SQL engine
-│   │   │   ├── auth/             # JWT auth & Google OAuth
-│   │   │   ├── budget/           # Category envelope budget tracking
-│   │   │   ├── dashboard/        # Financial health metrics & trend aggregation
+│   │   │   ├── ai/               # AI Engine
+│   │   │   │   ├── agents/       # Agents (finance, proactive, category, fraud, sql, etc.)
+│   │   │   │   ├── services/     # Central Gemini wrapper & Tax RAG service
+│   │   │   │   └── utils/        # Anomaly engine, normalizer, hardened SQL guard
 │   │   │   ├── payment/          # Razorpay orders, HMAC verification & webhooks
-│   │   │   └── transaction/      # CRUD, pagination & SHA-256 deduplication
+│   │   │   ├── transaction/      # CRUD, pagination & SHA-256 deduplication
+│   │   │   └── ...               # Account, budget, dashboard modules
 │   │   └── server.js             # Express application entrypoint
-│   └── tests/
-│       ├── deduplication.test.js # Statement deduplication test suite
-│       └── payment.test.js       # Fintech security & signature verification suite
+│   └── tests/                    # 113 unit & integration tests across 39 suites
 │
 ├── frontend/
-│   ├── public/                   # Static assets & favicon
 │   ├── src/
-│   │   ├── components/           # Reusable UI components (Card, Button, Modal, Nav)
-│   │   ├── context/              # AuthContext & ThemeContext (Midnight Sapphire)
-│   │   ├── pages/                # App views (Dashboard, Transactions, Accounts, Settings, AIAssistant)
+│   │   ├── components/           # UI components (ChatBox, NotificationCard, FraudCard)
+│   │   ├── pages/                # Views (Dashboard, Transactions, AIAssistant, Settings)
 │   │   ├── services/             # Axios API client & Razorpay SDK loader
-│   │   └── utils/
-│   │       ├── cn.ts             # Tailwind class merging utility
-│   │       └── invoiceGenerator.ts # Client-side GST Tax Invoice PDF synthesizer
-│   ├── index.html                # Pre-loaded Razorpay checkout script
+│   │   └── types/                # Strict TypeScript interfaces (ai.ts, etc.)
 │   └── package.json
 │
+├── docs/
+│   ├── AI_UPGRADE_NOTES.md       # Architectural audit, recon summary & verification log
+│   └── EVAL_RESULTS.md           # Benchmark execution report & accuracy tracking
 └── README.md                     # Comprehensive project documentation
 ```
 
