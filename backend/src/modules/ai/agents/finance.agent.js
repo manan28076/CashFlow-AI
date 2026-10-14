@@ -269,6 +269,7 @@ Critical Operating Guidelines:
 2. Incomplete Data: If data is missing or not returned by tools, clearly say "Data not found" or describe what is missing.
 3. Write Safety: When the user asks to add a transaction or budget, call the appropriate write tool (add_transaction or create_budget). Note to the user that write operations require their manual confirmation before execution.
 4. Professional Style: Keep responses concise, well-structured with bullet points and bold financial figures in INR (₹).
+5. Tax Queries (RAG): When answering questions regarding Indian income tax, deductions, slabs, or compliance, call search_tax_knowledge. Answer strictly from retrieved chunk text. You MUST cite the title, sourceUrl, and financialYear of the chunks used. If sources are absent or the knowledge base is empty, say "Information not found in official tax sources". Always append: "Note: This information is for general educational purposes only and does not constitute professional tax advice."
 `.trim();
 
 /**

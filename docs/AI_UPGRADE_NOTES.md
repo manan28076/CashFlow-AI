@@ -325,3 +325,34 @@ Verified directly from `backend/node_modules/@google/genai` source (`dist/index.
 - **Verification**:
   - `backend/tests/ai.observability.test.js`: 2 tests passed.
   - Full test suite: 104 passing tests, 0 failing across 34 suites. `npx prisma validate` passed.
+---
+
+## Phase 8: India Tax Knowledge RAG Engine Summary
+- **Anti-Hallucination & Truthfulness Policy**:
+  - The AI financial copilot is strictly forbidden from generating tax rules, limits, section numbers, or filing deadlines from memory.
+  - Indian tax answers are sourced exclusively from verified official markdown files placed in `backend/knowledge/in-tax/`.
+  - Created `backend/knowledge/in-tax/README.md` defining required YAML front-matter (`title`, `sourceUrl`, `retrievedOn`, `financialYear`) and official document download recommendations from `incometax.gov.in`.
+  - When the folder is empty or when query similarity falls below threshold, the tool responds with truthfulness: *"India tax knowledge base is currently empty. Please refer to ingested official documents."*
+  - Mandatory disclaimer appended to every tax response: *"Note: This information is for general educational purposes only and does not constitute professional tax advice."*
+- **Database Schema**:
+  - Added models `KnowledgeDoc` (`id`, `title`, `sourceUrl`, `financialYear`, `retrievedOn`, `contentHash`) and `KnowledgeChunk` (`id`, `docId`, `chunkIndex`, `text`, `embedding Float[]`, `tokenCount`).
+  - Embeddings stored as native PostgreSQL `DOUBLE PRECISION[]` (`Float[]` in Prisma), enabling vector ranking in JavaScript without external pgvector dependencies.
+  - Created migration `backend/prisma/migrations/20261014_add_knowledge_base/migration.sql`.
+  - Synced to remote database via `npx prisma db push`.
+- **RAG Ingestion Pipeline (`services/taxRag.service.js` & `scripts/ingestKnowledge.js`)**:
+  - `parseFrontMatter`: extracts YAML metadata and validates source URLs.
+  - `chunkText`: chunks documents on paragraph boundaries (`\n\n`) with target size ~900 characters and ~150 characters sliding overlap.
+  - `contentHash`: SHA-256 fingerprinting skips unchanged documents during re-ingestion.
+  - `embedText`: official Gemini API `text-embedding-004` wrapper in `gemini.service.js` with observability logging to `AiCallLog`.
+  - Added `npm run ingest:knowledge` to `package.json`.
+- **In-Memory Cosine Similarity & Retrieval**:
+  - `cosineSimilarity`: hand-tested pure vector dot product normalized by Euclidean magnitudes.
+  - `searchTaxKnowledge`: top-k (default 4) retrieval gated by minimum threshold (0.55). Formats chunk citations with `title`, `sourceUrl`, `financialYear`, and the required tax disclaimer.
+- **Finance Agent Integration**:
+  - Connected `search_tax_knowledge(query)` tool in `finance.agent.js`.
+  - Updated `SYSTEM_INSTRUCTION` instructing the copilot to always cite source metadata, refuse ungrounded tax inquiries, and append the disclaimer.
+- **Evaluation Dataset**:
+  - Added 8 tax RAG benchmark questions (`agent_16` to `agent_23`) to `backend/evals/datasets/agent.json` covering slabs, standard deductions, 80C, 87A rebate, capital gains, out-of-scope refusal, and adversarial Hawala evasion refusal. Marked as `skipped: true` awaiting official document placement.
+- **Verification**:
+  - `backend/tests/ai.taxRag.test.js`: 9 unit tests verifying front-matter parsing, paragraph chunking with overlap, hand-checked cosine similarity proofs, synthetic corpus rank ordering, threshold gating, empty-KB response, and disclaimer inclusion.
+  - Full test suite: 113 passing tests, 0 failing across 39 suites. `npx prisma validate` passed.

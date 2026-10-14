@@ -322,9 +322,53 @@ const askGeminiStructured = async ({ contents, jsonMode = true, temperature = 0,
   return result.text;
 };
 
+/**
+ * Generate vector embeddings for text using the official Gemini embeddings API.
+ * Automatically logs token usage and latency to AiCallLog for observability.
+ */
+const embedText = async ({ text, model = "text-embedding-004", userId = null }) => {
+  const startTime = Date.now();
+  let embedding = [];
+  let error = null;
+
+  try {
+    const res = await ai.models.embedContent({
+      model,
+      contents: text,
+    });
+    embedding = res.embeddings?.[0]?.values || res.embedding?.values || [];
+  } catch (err) {
+    error = err;
+    console.error(`[GeminiWrapper] embedContent failed for model ${model}:`, err.message);
+  }
+
+  const latencyMs = Date.now() - startTime;
+  const tokenEst = Math.ceil((text || "").length / 4);
+
+  await logAiCall({
+    userId,
+    agentName: "tax_embeddings",
+    model,
+    promptTokens: tokenEst,
+    completionTokens: 0,
+    totalTokens: tokenEst,
+    latencyMs,
+    success: !error,
+    errorType: error ? error.name || "EMBEDDING_FAILED" : null,
+    retries: 0,
+  }).catch(() => {});
+
+  if (error) {
+    throw error;
+  }
+
+  return embedding;
+};
+
 module.exports = {
   ai,
   callGemini,
+  embedText,
   askGemini,
   askGeminiStructured,
   calculateCost,
