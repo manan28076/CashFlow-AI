@@ -1,6 +1,7 @@
 const prisma = require("../../lib/prisma");
 const AppError = require("../../errors/AppError");
 const { computeTransactionHash } = require("./utils/hash");
+const { normalizeMerchant } = require("../ai/utils/normalizeMerchant");
 
 const createTransaction = async (data, userId) => {
   const {
@@ -210,6 +211,38 @@ const updateTransaction = async (id, data, userId) => {
     },
     include: { account: true, category: true },
   });
+
+  // Phase 2: Upsert MerchantRule with source=USER when user updates category (USER always overrides LLM)
+  if (data.categoryId) {
+    const rawMerchant = data.merchant !== undefined ? data.merchant : (transaction.merchant || transaction.description);
+    const merchantKey = normalizeMerchant(rawMerchant);
+    if (merchantKey) {
+      await prisma.merchantRule.upsert({
+        where: {
+          userId_merchantKey: {
+            userId,
+            merchantKey,
+          },
+        },
+        create: {
+          userId,
+          merchantKey,
+          categoryId: data.categoryId,
+          source: "USER",
+          hitCount: 1,
+          lastUsedAt: new Date(),
+        },
+        update: {
+          categoryId: data.categoryId,
+          source: "USER",
+          lastUsedAt: new Date(),
+          hitCount: { increment: 1 },
+        },
+      }).catch((err) => {
+        console.error("[MerchantRule] Failed to upsert user correction rule:", err.message);
+      });
+    }
+  }
 
   return updated;
 };

@@ -10,7 +10,7 @@ const runAI = async (transactions, userId) => {
 
   const indexed = transactions.map((t, i) => ({ id: i, ...t }));
 
-  const [categories, insights, budget, fraud, health] =
+  const [categoryResult, insights, budget, fraud, health] =
     await Promise.all([
       categoryAgent(indexed, categoryNames, userId),
       insightAgent(indexed, userId),
@@ -19,7 +19,21 @@ const runAI = async (transactions, userId) => {
       healthAgent(indexed, userId),
     ]);
 
-  return { indexed, categories, insights, budget, fraud, health, nameToId };
+  const categories = categoryResult?.categories || (Array.isArray(categoryResult) ? categoryResult : []);
+  const categorizedFromMemory = categoryResult?.categorizedFromMemory ?? 0;
+  const categorizedByLlm = categoryResult?.categorizedByLlm ?? (Array.isArray(categoryResult) ? categoryResult.length : 0);
+
+  return {
+    indexed,
+    categories,
+    insights,
+    budget,
+    fraud,
+    health,
+    nameToId,
+    categorizedFromMemory,
+    categorizedByLlm,
+  };
 };
 
 module.exports = {

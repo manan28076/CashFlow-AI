@@ -58,6 +58,8 @@ const uploadStatement = asyncHandler(async (req, res) => {
       budget: result.budget,
       fraud: result.fraud,
       health: result.health,
+      categorizedFromMemory: result.categorizedFromMemory ?? 0,
+      categorizedByLlm: result.categorizedByLlm ?? 0,
     })
   );
 });

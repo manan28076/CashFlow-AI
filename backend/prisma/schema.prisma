@@ -26,6 +26,7 @@ model User {
   monthlyBudgets        MonthlyBudget[]
   payments              SubscriptionPayment[]
   aiCallLogs            AiCallLog[]
+  merchantRules         MerchantRule[]
 }
 
 model SubscriptionPayment {
@@ -72,6 +73,7 @@ model Category {
 
   transactions Transaction[]
   budgets      Budget[]
+  merchantRules MerchantRule[]
 }
 
 model Transaction {
@@ -145,4 +147,26 @@ model AiCallLog {
 
   @@index([userId, createdAt])
   @@index([agent, createdAt])
+}
+
+enum MerchantRuleSource {
+  USER
+  LLM
+}
+
+model MerchantRule {
+  id          String             @id @default(cuid())
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchantKey String
+  categoryId  String
+  category    Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  source      MerchantRuleSource
+  hitCount    Int                @default(1)
+  lastUsedAt  DateTime           @default(now())
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([userId, merchantKey])
+  @@index([userId, merchantKey])
 }

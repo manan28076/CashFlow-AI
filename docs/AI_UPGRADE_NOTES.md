@@ -165,3 +165,29 @@ Verified directly from `backend/node_modules/@google/genai` source (`dist/index.
 - **Verification**:
   - `backend/tests/ai.wrapper.test.js`: 7 subtests verifying wrapper retry, validation errors, timeouts, cost estimation, and database metrics aggregation.
   - Total test suite: 14 passing tests, 0 failing. `npx prisma validate` passed.
+
+---
+
+## Phase 2: Merchant Memory + User Corrections Summary
+- **Database Schema**:
+  - Added enum `MerchantRuleSource` (`USER`, `LLM`) and model `MerchantRule` with fields `id`, `userId`, `merchantKey`, `categoryId`, `source`, `hitCount`, `lastUsedAt`, `createdAt`, `updatedAt`, and unique constraint `@@unique([userId, merchantKey])`.
+  - Added relations to `User` and `Category`.
+  - Created migration `backend/prisma/migrations/20261014_add_merchant_rule/migration.sql`.
+  - Synced to remote database via `npx prisma db push`.
+- **Merchant Normalization (`utils/normalizeMerchant.js`)**:
+  - Deterministic normalizer handling lowercase conversion, stripping Indian banking channel prefixes (`UPI`, `NEFT`, `RTGS`, `IMPS`, `ACH/NACH`, `POS`, `TRANSFER TO/FROM`), stripping routing flags (`CR`, `DR`, `P2M`, `P2P`, `P2A`), stripping reference IDs, phone numbers, card masking patterns, legal entity suffixes (`pvt ltd`, `inc`, `corp`), punctuation, and extra whitespace.
+  - Tested against 18 deterministic cases including realistic statement narrations.
+- **Category Flow in `category.agent.js` & `orchestrator.js`**:
+  - Checks user rules in `MerchantRule` first.
+  - Matches resolve instantly from memory with `source=USER` or `source=LLM`, incrementing `hitCount`.
+  - Only unknown merchants are batched to Gemini LLM. When all match memory, LLM call is completely bypassed (0 tokens, 0 API latency).
+  - New LLM categorization results are saved as `source=LLM` rules without overwriting higher-priority `USER` rules.
+- **User Corrections**:
+  - Hooked into `updateTransaction` in `transaction.service.js`: when a user updates a transaction's category, it upserts a `MerchantRule` with `source: "USER"`, overriding any previous LLM rules while preserving the existing API contract.
+- **Few-Shot Prompting**:
+  - User's top 10 most recent `USER` corrections are fetched and injected as few-shot examples into `categoryPrompt`.
+- **Upload Response Additive Fields**:
+  - `POST /api/ai/upload` returns `categorizedFromMemory` and `categorizedByLlm` alongside all existing fields (`transactions`, `insights`, `budget`, `fraud`, `health`).
+- **Verification**:
+  - `backend/tests/ai.merchantMemory.test.js` tests normalization (18 test cases), rule hit skipping LLM (mocked), USER overriding LLM, and unique constraint enforcement.
+  - Total test suite: 35 passing tests, 0 failing across 8 suites. `npx prisma validate` passed.
