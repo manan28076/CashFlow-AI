@@ -4,13 +4,23 @@ import { Sparkles } from "lucide-react";
 import { TopNavbar } from "../components/layout/TopNavbar";
 import { MobileNav } from "../components/layout/MobileNav";
 import { useAudit } from "../contexts/AuditContext";
+import { useTheme } from "../hooks/useTheme";
+import { cn } from "../utils/cn";
 
 export const AppLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuditing } = useAudit();
+  const { theme } = useTheme();
 
   return (
-    <div className="bg-ledger-grid min-h-screen bg-stone-100">
+    <div
+      className={cn(
+        "min-h-screen transition-colors duration-300",
+        theme === "dark-blue"
+          ? "bg-[#080d1a] text-slate-100 bg-dark-blue-ledger selection:bg-blue-600/30 selection:text-blue-200"
+          : "bg-stone-100 text-stone-900 bg-ledger-grid selection:bg-orange-500/20 selection:text-orange-900"
+      )}
+    >
       <TopNavbar onMenuClick={() => setMobileOpen(true)} />
       <MobileNav isOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 

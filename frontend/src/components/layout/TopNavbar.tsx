@@ -10,8 +10,11 @@ import {
   LogOut,
   Menu,
   Box,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useTheme } from "../../hooks/useTheme";
 import { cn } from "../../utils/cn";
 
 const links = [
@@ -29,6 +32,7 @@ interface TopNavbarProps {
 
 export const TopNavbar = ({ onMenuClick }: TopNavbarProps) => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -37,7 +41,7 @@ export const TopNavbar = ({ onMenuClick }: TopNavbarProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-stone-950 bg-stone-950">
+    <header className="sticky top-0 z-30 border-b border-stone-900 bg-stone-950 dark:border-blue-900/40 dark:bg-[#070b16] transition-colors duration-200">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-6">
           <button
@@ -78,13 +82,27 @@ export const TopNavbar = ({ onMenuClick }: TopNavbarProps) => {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="hidden text-sm text-stone-400 sm:inline">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white dark:border-blue-500/20 dark:bg-blue-950/40 dark:text-blue-300 transition-all"
+            title={theme === "dark-blue" ? "Switch to Light Theme" : "Switch to Dark Blue Theme"}
+            aria-label="Toggle theme"
+          >
+            {theme === "dark-blue" ? (
+              <Sun size={17} className="text-amber-400" />
+            ) : (
+              <Moon size={17} className="text-blue-300" />
+            )}
+          </button>
+
+          <span className="hidden text-sm text-stone-400 dark:text-slate-400 sm:inline">
             {user?.email}
           </span>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-stone-300 hover:bg-stone-800 hover:text-white"
+            className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-stone-300 hover:bg-stone-800 hover:text-white dark:hover:bg-blue-950/60"
           >
             <LogOut size={16} />
             <span className="hidden sm:inline">Logout</span>

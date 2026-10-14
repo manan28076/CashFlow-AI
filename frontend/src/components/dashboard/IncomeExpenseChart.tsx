@@ -96,18 +96,18 @@ export const IncomeExpenseChart = ({ data, isLoading }: IncomeExpenseChartProps)
   const totalExpense = data.reduce((acc, d) => acc + (d.expense || 0), 0);
 
   return (
-    <Card className="flex flex-col justify-between overflow-hidden rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xs hover:shadow-md transition-all duration-300">
+    <Card className="flex flex-col justify-between overflow-hidden rounded-2xl border border-stone-200/90 dark:border-blue-900/40 p-5 shadow-xs hover:shadow-md transition-all duration-300">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 pb-4 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-100 dark:border-slate-800/80 pb-4 mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-600 shadow-2xs">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 shadow-2xs">
             <BarChart3 size={18} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-stone-900">
+            <h3 className="text-base font-bold text-stone-900 dark:text-white">
               Monthly Income vs Expense
             </h3>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-stone-500 dark:text-slate-400">
               Cash inflow compared to monthly outflows
             </p>
           </div>

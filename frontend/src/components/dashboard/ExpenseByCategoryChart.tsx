@@ -209,14 +209,14 @@ export const ExpenseByCategoryChart = ({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-stone-900">
+            <h3 className="text-base font-semibold text-stone-900 dark:text-white">
               Expense by Category
             </h3>
             {isFetching && (
               <span className="inline-block h-2 w-2 animate-ping rounded-full bg-indigo-500" />
             )}
           </div>
-          <p className="text-xs text-stone-500">
+          <p className="text-xs text-stone-500 dark:text-slate-400">
             {selectedMonth === "all"
               ? "All-time total expenses across all categories"
               : `Only expenses made in ${monthName(selectedMonth as number)} ${selectedYear}`}

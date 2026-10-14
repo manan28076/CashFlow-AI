@@ -52,8 +52,8 @@ export const Dashboard = () => {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900">Dashboard</h1>
-          <p className="text-sm text-stone-500">Your financial overview at a glance</p>
+          <h1 className="text-2xl font-semibold text-stone-900 dark:text-white">Dashboard</h1>
+          <p className="text-sm text-stone-500 dark:text-slate-400">Your financial overview at a glance</p>
         </div>
         <Link to="/import">
           <Button className="w-full sm:w-auto">

@@ -155,6 +155,7 @@ export const SummaryCards = ({
             to={card.to}
             className={cn(
               "group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-stone-200/90 bg-white p-4 sm:p-5 shadow-xs",
+              "dark:border-blue-900/40 dark:bg-[#0f172a] dark:hover:border-blue-500/40 dark:shadow-md dark:shadow-blue-950/20",
               "transition-all duration-300 ease-out",
               "hover:-translate-y-1.5 hover:shadow-xl hover:scale-[1.015] active:scale-[0.99]",
               card.borderColorHover,
@@ -173,13 +174,13 @@ export const SummaryCards = ({
             <div>
               {/* Header: Label + Animated Icon Pill */}
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 transition-colors group-hover:text-stone-700">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 transition-colors group-hover:text-stone-700 dark:text-slate-400 dark:group-hover:text-slate-200">
                   {card.label}
                 </span>
 
                 <div
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-xl border border-stone-200/50 shadow-2xs",
+                    "flex h-8 w-8 items-center justify-center rounded-xl border border-stone-200/50 shadow-2xs dark:border-blue-900/40",
                     "transition-all duration-300 ease-out group-hover:rotate-6 group-hover:scale-110",
                     card.iconBg,
                     card.iconColor,
@@ -198,10 +199,10 @@ export const SummaryCards = ({
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition-all duration-300",
                         budgetStatus === "Over budget"
-                          ? "border border-red-200 bg-red-50 text-red-700 group-hover:bg-red-100 group-hover:shadow-xs"
+                          ? "border border-red-200 bg-red-50 text-red-700 group-hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400"
                           : budgetStatus === "On track"
-                          ? "border border-emerald-200 bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100 group-hover:shadow-xs"
-                          : "border border-stone-200 bg-stone-100 text-stone-700"
+                          ? "border border-emerald-200 bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400"
+                          : "border border-stone-200 bg-stone-100 text-stone-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
                       )}
                     >
                       <span
@@ -218,7 +219,7 @@ export const SummaryCards = ({
                     </span>
                   </div>
                 ) : (
-                  <span className="font-numeric text-xl font-bold tracking-tight text-stone-900 transition-all duration-300 group-hover:scale-[1.03] group-hover:text-stone-950 sm:text-2xl origin-left inline-block">
+                  <span className="font-numeric text-xl font-bold tracking-tight text-stone-900 transition-all duration-300 group-hover:scale-[1.03] group-hover:text-stone-950 dark:text-white dark:group-hover:text-white sm:text-2xl origin-left inline-block">
                     {card.value}
                   </span>
                 )}
@@ -226,11 +227,11 @@ export const SummaryCards = ({
             </div>
 
             {/* Footer Subtitle + Interactive Micro-indicator */}
-            <div className="mt-3 flex items-center justify-between border-t border-stone-100/90 pt-2.5 text-[11px] text-stone-400">
-              <span className="font-medium text-stone-500 transition-colors group-hover:text-stone-700">
+            <div className="mt-3 flex items-center justify-between border-t border-stone-100/90 dark:border-slate-800/80 pt-2.5 text-[11px] text-stone-400 dark:text-slate-400">
+              <span className="font-medium text-stone-500 transition-colors group-hover:text-stone-700 dark:text-slate-400 dark:group-hover:text-slate-200">
                 {card.subtitle}
               </span>
-              <div className="flex items-center gap-0.5 text-stone-400 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-stone-700">
+              <div className="flex items-center gap-0.5 text-stone-400 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-stone-700 dark:text-slate-400 dark:group-hover:text-slate-200">
                 <ArrowUpRight size={13} />
               </div>
             </div>

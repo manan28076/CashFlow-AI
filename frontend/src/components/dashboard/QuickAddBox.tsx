@@ -129,14 +129,14 @@ export const QuickAddBox = ({ onTransactionAdded }: QuickAddBoxProps) => {
   };
 
   return (
-    <div className="rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50/70 via-white to-amber-50/50 p-4 shadow-sm">
+    <div className="rounded-xl border border-orange-200 dark:border-orange-500/30 bg-gradient-to-r from-orange-50/70 via-white to-amber-50/50 dark:from-orange-950/20 dark:via-[#0f172a] dark:to-blue-950/20 p-4 shadow-sm">
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-orange-900">
-            <Sparkles size={14} className="text-orange-600" />
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-orange-900 dark:text-orange-400">
+            <Sparkles size={14} className="text-orange-600 dark:text-orange-400" />
             <span>AI Quick Add</span>
           </div>
-          <span className="text-[11px] text-stone-500">
+          <span className="text-[11px] text-stone-500 dark:text-slate-400">
             e.g. "zomato 350", "chai 40 yesterday", "salary 50000"
           </span>
         </div>
@@ -155,7 +155,7 @@ export const QuickAddBox = ({ onTransactionAdded }: QuickAddBoxProps) => {
               }}
               placeholder="Type or speak a transaction..."
               disabled={isParsing || isSaving}
-              className="w-full rounded-lg border border-stone-300 bg-white py-2 pl-3 pr-10 text-sm text-stone-800 placeholder-stone-400 shadow-sm focus:border-orange-500 focus:outline-none"
+              className="w-full rounded-lg border border-stone-300 dark:border-slate-700 bg-white dark:bg-[#0c1322] py-2 pl-3 pr-10 text-sm text-stone-800 dark:text-slate-100 placeholder-stone-400 dark:placeholder-slate-500 shadow-sm focus:border-orange-500 focus:outline-hidden"
             />
             <button
               type="button"
