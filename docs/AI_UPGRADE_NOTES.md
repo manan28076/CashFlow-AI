@@ -191,3 +191,22 @@ Verified directly from `backend/node_modules/@google/genai` source (`dist/index.
 - **Verification**:
   - `backend/tests/ai.merchantMemory.test.js` tests normalization (18 test cases), rule hit skipping LLM (mocked), USER overriding LLM, and unique constraint enforcement.
   - Total test suite: 35 passing tests, 0 failing across 8 suites. `npx prisma validate` passed.
+
+---
+
+## Phase 3: Hybrid Anomaly Detection Summary
+- **Pure Module `utils/anomaly.js` (No DB, No LLM)**:
+  - Per category per user robust statistics.
+  - Computes median and Median Absolute Deviation (MAD)-based modified Z-score using Boris Iglewicz & David Hoaglin (1993) standard ($M_i = \frac{0.6745 \times |x - \text{median}|}{MAD} > 3.5$).
+  - Fallback to Tukey's IQR rule ($Q_3 + 1.5 \times IQR$) and zero-variance multiplier ($3.0 \times \text{median}$) when $MAD = 0$.
+  - Enforces strict minimum history requirement (`MIN_CATEGORY_HISTORY = 5`) before flagging statistical outliers; below it returns `insufficient_history` instead of guessing.
+  - Detects exact duplicates (same amount + normalized merchant + within 24-hour window).
+  - Flags include `transactionIndex`/`id`, `method` (`zscore` | `iqr` | `duplicate`), `score`, and explainability numbers (`median`, `mad`, `q1`, `q3`, `amount`).
+- **Fraud Agent Redesign (`fraud.agent.js`)**:
+  - Deterministic statistics decide WHAT is flagged. The LLM can NEVER add or remove flags.
+  - If 0 anomalies detected, bypasses LLM completely (0 tokens, instant response).
+  - If anomalies detected, LLM writes a concise human-readable explanation strictly for already-flagged items using structured output via the Phase 1 wrapper.
+  - Preserves exact response shape for frontend `FraudCard` (`risk`, `flaggedIds`, `reason`) plus additive `flags` array.
+- **Verification**:
+  - Table-driven unit tests in `backend/tests/ai.anomaly.test.js` with hand-computed mathematical proofs documented in comments (Modified Z-score calculation 15.51, MAD=0 fallback, duplicate detection, history threshold, empty/edge cases, fraud agent strict contract).
+  - Total test suite: 46 passing tests, 0 failing across 15 suites. `npx prisma validate` passed.
