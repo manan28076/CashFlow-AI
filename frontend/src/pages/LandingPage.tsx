@@ -14,16 +14,24 @@ import {
   Lock,
   ChevronRight,
   TrendingUp,
+  TrendingDown,
   X,
   CreditCard,
   Building2,
-  PieChart,
+  PieChart as PieChartIcon,
   Copy,
+  Cpu,
+  Wifi,
+  ArrowUpRight,
+  Wallet,
+  Activity,
+  Receipt,
+  Layers,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
 export const LandingPage = () => {
-  const { user, isAuthenticated, login, register, loginWithGoogle, loginWithDemo } = useAuth();
+  const { isAuthenticated, login, register, loginWithGoogle, loginWithDemo } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -43,7 +51,7 @@ export const LandingPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // If URL is /login or /register or has ?auth=login/?auth=register, open modal automatically
+  // Auto-open modal if URL is /login or /register
   useEffect(() => {
     const path = window.location.pathname;
     const authParam = searchParams.get("auth");
@@ -103,7 +111,7 @@ export const LandingPage = () => {
 
   const handleDemoLaunch = async () => {
     try {
-      toast.loading("Loading realistic Indian demo data...", { id: "demo-loading" });
+      toast.loading("Loading realistic demo account...", { id: "demo-loading" });
       await loginWithDemo();
       toast.success("Welcome to Demo Mode!", { id: "demo-loading" });
       navigate("/dashboard");
@@ -113,19 +121,19 @@ export const LandingPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#07090e] text-stone-100 font-sans selection:bg-orange-500/30 selection:text-orange-200 overflow-x-hidden">
+    <div className="relative min-h-screen bg-[#090d15] text-stone-100 font-sans selection:bg-orange-500/30 selection:text-orange-200 overflow-x-hidden bg-dark-ledger">
       {/* AMBIENT RADIAL LIGHTING */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[1000px] rounded-full bg-gradient-to-b from-orange-500/15 via-amber-500/5 to-transparent blur-3xl" />
-        <div className="absolute top-1/3 -left-40 h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="absolute bottom-1/4 -right-40 h-[600px] w-[600px] rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[550px] w-[950px] rounded-full bg-gradient-to-b from-orange-600/15 via-amber-500/5 to-transparent blur-3xl" />
+        <div className="absolute top-1/2 -left-48 h-[600px] w-[600px] rounded-full bg-indigo-600/10 blur-3xl" />
+        <div className="absolute bottom-10 -right-48 h-[600px] w-[600px] rounded-full bg-emerald-600/10 blur-3xl" />
       </div>
 
       {/* TOP NAVIGATION BAR */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#07090e]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-white/[0.08] bg-[#090d15]/85 backdrop-blur-xl">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-10">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-lg shadow-orange-500/25 transition-transform duration-300 group-hover:scale-105">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25 transition-transform duration-300 group-hover:scale-105">
               <Sparkles size={20} />
             </div>
             <div className="flex flex-col">
@@ -133,33 +141,33 @@ export const LandingPage = () => {
                 CashFlow <span className="text-orange-500">AI</span>
               </span>
               <span className="text-[10px] uppercase font-mono tracking-widest text-stone-400">
-                Fintech Copilot
+                Financial Operating System
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-stone-400">
-            <a href="#features" className="hover:text-white transition-colors">
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-stone-300">
+            <a href="#demo" className="hover:text-orange-400 transition-colors">
+              Platform Demo
+            </a>
+            <a href="#features" className="hover:text-orange-400 transition-colors">
               Features
             </a>
-            <a href="#demo" className="hover:text-white transition-colors">
-              Product Demo
-            </a>
-            <a href="#pricing" className="hover:text-white transition-colors">
+            <a href="#pricing" className="hover:text-orange-400 transition-colors">
               Pricing
             </a>
-            <a href="#reviews" className="hover:text-white transition-colors">
+            <a href="#reviews" className="hover:text-orange-400 transition-colors">
               Reviews
             </a>
           </nav>
 
           {/* Header Action Buttons */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <Link
                 to="/dashboard"
-                className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-bold text-stone-900 shadow-lg shadow-white/10 transition-all hover:bg-stone-100 hover:scale-[1.02]"
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-orange-600/25 transition-all hover:brightness-110 hover:scale-[1.02]"
               >
                 Go to Dashboard
                 <ArrowRight size={14} />
@@ -169,7 +177,7 @@ export const LandingPage = () => {
                 <button
                   type="button"
                   onClick={handleDemoLaunch}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-all"
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-all"
                 >
                   <Zap size={13} className="text-amber-400" />
                   <span>Try Demo</span>
@@ -181,7 +189,7 @@ export const LandingPage = () => {
                     setAuthMode("login");
                     setIsAuthModalOpen(true);
                   }}
-                  className="rounded-full px-4 py-2 text-xs font-semibold text-stone-300 hover:text-white hover:bg-white/5 transition-all"
+                  className="rounded-xl px-4 py-2 text-xs font-semibold text-stone-300 hover:text-white hover:bg-white/5 transition-all"
                 >
                   Log in
                 </button>
@@ -192,7 +200,7 @@ export const LandingPage = () => {
                     setAuthMode("register");
                     setIsAuthModalOpen(true);
                   }}
-                  className="rounded-full bg-white px-5 py-2.5 text-xs font-bold text-stone-950 shadow-md shadow-white/10 transition-all hover:bg-stone-200 hover:scale-[1.02]"
+                  className="rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-stone-950 shadow-md shadow-white/10 transition-all hover:bg-stone-200 hover:scale-[1.02]"
                 >
                   Get started
                 </button>
@@ -202,139 +210,189 @@ export const LandingPage = () => {
         </div>
       </header>
 
-      {/* HERO SECTION WITH COPILOT-STYLE 3D FLOATING PILLS */}
-      <section className="relative pt-24 pb-20 md:pt-36 md:pb-32 px-6 lg:px-10 overflow-hidden text-center">
-        {/* Floating Category Pills */}
-        <div className="pointer-events-none absolute inset-0 max-w-7xl mx-auto hidden lg:block select-none">
-          {/* Pill 1: GROCERIES */}
-          <div
-            className="animate-float-slow absolute top-12 left-[6%] rounded-full border border-rose-500/30 bg-rose-950/40 px-5 py-2.5 text-xs font-bold tracking-wider text-rose-300 shadow-xl backdrop-blur-md"
-            style={{ "--rot": "-7deg" } as any}
-          >
-            🍎 GROCERIES
-          </div>
+      {/* ORIGINAL HERO SECTION: FINANCIAL CLARITY, ENGINEERED FOR VELOCITY */}
+      <section className="relative pt-20 pb-16 md:pt-28 md:pb-24 px-6 lg:px-10 overflow-hidden">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            {/* Left Column: Value Proposition & CTAs */}
+            <div className="lg:col-span-7 text-center lg:text-left z-10">
+              {/* Product Badge */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-xs font-semibold text-orange-400 mb-6 backdrop-blur-md">
+                <Sparkles size={14} className="text-orange-400 animate-pulse" />
+                <span>Smart UPI Parsing • Zero Duplicates • AI Auditing</span>
+              </div>
 
-          {/* Pill 2: DATE NIGHT */}
-          <div
-            className="animate-float-medium absolute top-8 right-[8%] rounded-full border border-purple-500/30 bg-purple-950/40 px-5 py-2.5 text-xs font-bold tracking-wider text-purple-300 shadow-xl backdrop-blur-md"
-            style={{ "--rot": "6deg" } as any}
-          >
-            🍷 DATE NIGHT
-          </div>
+              {/* Headline */}
+              <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] text-white">
+                Financial Clarity,{" "}
+                <span className="block bg-gradient-to-r from-orange-400 via-amber-300 to-yellow-200 bg-clip-text text-transparent">
+                  Engineered for Velocity.
+                </span>
+              </h1>
 
-          {/* Pill 3: ZERODHA SIP */}
-          <div
-            className="animate-float-reverse absolute top-48 left-[3%] rounded-full border border-emerald-500/30 bg-emerald-950/40 px-5 py-2.5 text-xs font-bold tracking-wider text-emerald-300 shadow-xl backdrop-blur-md"
-            style={{ "--rot": "-4deg" } as any}
-          >
-            📈 ZERODHA SIP
-          </div>
+              {/* Subtitle */}
+              <p className="mt-6 text-base sm:text-lg text-stone-300 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                Turn messy Indian bank statements, PhonePe/Paytm UPI logs, and scattered multi-bank balances
+                into structured wealth clarity. No duplicate data. No manual spreadsheet typing.
+              </p>
 
-          {/* Pill 4: BABY & FAMILY */}
-          <div
-            className="animate-float-slow absolute top-44 right-[5%] rounded-full border border-pink-500/30 bg-pink-950/40 px-5 py-2.5 text-xs font-bold tracking-wider text-pink-300 shadow-xl backdrop-blur-md"
-            style={{ "--rot": "8deg" } as any}
-          >
-            🧸 BABY & FAMILY
-          </div>
+              {/* Action Buttons */}
+              <div className="mt-9 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("register");
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-7 py-3.5 text-sm font-bold text-white shadow-xl shadow-orange-600/30 hover:brightness-110 hover:scale-[1.02] transition-all duration-200"
+                >
+                  <span>Start Free Journey</span>
+                  <ArrowRight size={16} />
+                </button>
 
-          {/* Pill 5: HOUSE RENT */}
-          <div
-            className="animate-float-medium absolute bottom-8 left-[12%] rounded-full border border-amber-500/30 bg-amber-950/40 px-5 py-2.5 text-xs font-bold tracking-wider text-amber-300 shadow-xl backdrop-blur-md"
-            style={{ "--rot": "6deg" } as any}
-          >
-            🏡 HOUSE RENT
-          </div>
+                <button
+                  type="button"
+                  onClick={handleDemoLaunch}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.04] px-6 py-3.5 text-sm font-semibold text-stone-200 hover:bg-white/[0.08] hover:text-white backdrop-blur-md transition-all duration-200"
+                >
+                  <Zap size={16} className="text-amber-400" />
+                  <span>Launch Live Interactive Demo</span>
+                </button>
+              </div>
 
-          {/* Pill 6: TRAVEL */}
-          <div
-            className="animate-float-reverse absolute bottom-6 right-[12%] rounded-full border border-cyan-500/30 bg-cyan-950/40 px-5 py-2.5 text-xs font-bold tracking-wider text-cyan-300 shadow-xl backdrop-blur-md"
-            style={{ "--rot": "-6deg" } as any}
-          >
-            ✈️ TRAVEL & FLIGHTS
-          </div>
+              {/* Proof badges */}
+              <div className="mt-10 flex flex-wrap items-center justify-center lg:justify-start gap-5 text-xs text-stone-400 font-medium">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-emerald-400" />
+                  <span>Zero-Duplicate Guarantee</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1.5">
+                  <Receipt size={14} className="text-orange-400" />
+                  <span>Parses HDFC, SBI, ICICI & UPI</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1.5">
+                  <Lock size={14} className="text-sky-400" />
+                  <span>Bank-Grade 256-Bit Encryption</span>
+                </div>
+              </div>
+            </div>
 
-          {/* Pill 7: SWIGGY / ZOMATO */}
-          <div
-            className="animate-float-slow absolute top-2 right-[32%] rounded-full border border-orange-500/30 bg-orange-950/40 px-4 py-2 text-xs font-bold tracking-wider text-orange-300 shadow-xl backdrop-blur-md"
-            style={{ "--rot": "-2deg" } as any}
-          >
-            🍕 SWIGGY & CHAI
-          </div>
-        </div>
+            {/* Right Column: Original 3D Floating Financial Artifacts */}
+            <div className="lg:col-span-5 relative flex flex-col gap-4 max-w-lg mx-auto lg:max-w-none">
+              {/* Artifact 1: UPI Narration Decoder Card */}
+              <div className="rounded-2xl border border-white/[0.1] bg-[#111622]/90 p-4 shadow-xl backdrop-blur-md transform hover:-translate-y-1 transition-all">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="font-mono text-[11px] text-stone-400">Raw Bank Narration:</span>
+                  <span className="rounded bg-rose-500/20 text-rose-400 font-bold px-2 py-0.5 text-[10px]">
+                    -₹420
+                  </span>
+                </div>
+                <div className="rounded-lg bg-black/40 p-2.5 font-mono text-[11px] text-stone-400 border border-white/[0.04] truncate">
+                  UPI/DR/48392019/SWIGGY/swiggy@icici/Order
+                </div>
+                <div className="mt-3 flex items-center justify-between pt-2 border-t border-white/[0.06]">
+                  <div className="flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-md bg-orange-500/20 text-orange-400 flex items-center justify-center text-xs font-bold">
+                      🍽️
+                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-white">Swiggy</span>
+                      <span className="text-[10px] text-stone-400 block">Food & Dining • Decoded via AI</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    Auto-Categorized
+                  </span>
+                </div>
+              </div>
 
-        {/* Hero Content */}
-        <div className="relative mx-auto max-w-4xl z-10">
-          {/* High-Profile Launch Pill */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent px-4 py-1.5 text-xs font-semibold text-orange-400 mb-8 backdrop-blur-md shadow-inner">
-            <Sparkles size={14} className="text-orange-400 animate-pulse" />
-            <span>AI Statement Parsing & Zero-Duplicate Shield Live</span>
-            <ChevronRight size={13} className="text-orange-400" />
-          </div>
+              {/* Artifact 2: Luxury HDFC Bank Smart Card */}
+              <div className="rounded-2xl border border-blue-400/30 bg-gradient-to-br from-[#121a2c] via-[#0d1322] to-[#0a0f1d] p-5 shadow-2xl backdrop-blur-md relative overflow-hidden transform hover:-translate-y-1 transition-all">
+                <div className="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500 absolute top-0 inset-x-0" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                      <Building2 size={16} />
+                    </div>
+                    <span className="rounded-full bg-blue-500/20 text-blue-300 font-bold text-[10px] px-2 py-0.5 border border-blue-500/30">
+                      HDFC Bank
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-5 w-7 rounded bg-amber-300/80 border border-amber-400 flex items-center justify-center shadow-xs">
+                      <Cpu size={12} className="text-amber-900" />
+                    </div>
+                    <Wifi size={13} className="rotate-90 text-stone-400" />
+                  </div>
+                </div>
 
-          {/* Main Giant Headline */}
-          <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[1.06] text-white">
-            Your money,{" "}
-            <span className="block bg-gradient-to-r from-white via-stone-200 to-orange-400 bg-clip-text text-transparent">
-              beautifully organized.
-            </span>
-          </h1>
+                <div className="mt-4 flex items-baseline justify-between">
+                  <div>
+                    <span className="text-xs text-stone-400 font-mono tracking-wider">•••• 4092</span>
+                    <h3 className="text-base font-bold text-white tracking-tight">Primary Salary Ledger</h3>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-stone-400 block">Available Balance</span>
+                    <span className="text-lg font-bold font-numeric text-white">₹1,94,266</span>
+                  </div>
+                </div>
 
-          {/* High-Class Subtitle */}
-          <p className="mt-7 text-base sm:text-xl text-stone-400 max-w-2xl mx-auto leading-relaxed">
-            All of your bank accounts, UPI spends, and investments, automatically tracked,
-            categorized, and audited with financial intelligence.
-          </p>
+                <div className="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-2 text-[10px] text-stone-400">
+                  <span className="flex items-center gap-1 text-emerald-400 font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Live Account Sync
+                  </span>
+                  <span>Active Ledger</span>
+                </div>
+              </div>
 
-          {/* Hero Action Buttons */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode("register");
-                setIsAuthModalOpen(true);
-              }}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full bg-white px-8 py-4 text-sm font-bold text-stone-950 shadow-2xl shadow-white/20 hover:bg-stone-200 hover:scale-[1.03] transition-all duration-200"
-            >
-              <span>Get started free</span>
-              <ArrowRight size={16} />
-            </button>
-
-            <button
-              type="button"
-              onClick={handleDemoLaunch}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] px-8 py-4 text-sm font-semibold text-stone-200 hover:bg-white/[0.08] hover:text-white hover:border-white/25 backdrop-blur-md transition-all duration-200"
-            >
-              <Zap size={16} className="text-amber-400" />
-              <span>Explore Live Demo (1-Click)</span>
-            </button>
-          </div>
-
-          {/* Social Proof Strip */}
-          <div className="mt-14 flex flex-wrap items-center justify-center gap-6 text-xs text-stone-500 font-medium">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-emerald-400" />
-              Zero duplicate transactions guarantee
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5">
-              <FileText size={14} className="text-orange-400" />
-              Parses Indian bank statements & UPI
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5">
-              <Lock size={14} className="text-sky-400" />
-              256-bit encryption & private
-            </span>
+              {/* Artifact 3: Zero Duplicate Cryptographic Shield Beacon */}
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 shadow-xl backdrop-blur-md flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-amber-200">Zero-Duplicate Shield</span>
+                      <span className="rounded-full bg-amber-400/20 text-amber-300 text-[9px] font-mono px-1.5 py-0.2">
+                        SHA-256
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-amber-300/80 block">
+                      Guards against accidental double clicks & duplicate imports
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold text-emerald-400">100% Clean</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* INTERACTIVE PRODUCT SHOWCASE SECTION */}
+      {/* INTERACTIVE PLATFORM DEMO: SHOWCASING THE ACTUAL CASHFLOW AI DASHBOARD */}
       <section id="demo" className="py-20 px-6 lg:px-10 max-w-7xl mx-auto">
-        <div className="rounded-3xl border border-white/[0.08] bg-[#0d111a]/80 p-4 sm:p-8 backdrop-blur-2xl shadow-2xl shadow-black/80">
-          {/* Window Bar Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-5 mb-6">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <span className="text-xs font-mono uppercase tracking-widest text-orange-400">
+            Interactive Product Tour
+          </span>
+          <h2 className="font-display text-3xl sm:text-5xl font-black text-white mt-2">
+            The platform built for financial mastery.
+          </h2>
+          <p className="text-stone-400 text-sm sm:text-base mt-3">
+            Click through the core modules to preview how CashFlow AI transforms raw data into clarity.
+          </p>
+        </div>
+
+        {/* Mockup Frame */}
+        <div className="rounded-3xl border border-white/[0.1] bg-[#0c1018] p-4 sm:p-6 shadow-2xl backdrop-blur-2xl">
+          {/* Top Browser Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-4 mb-6">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <span className="h-3 w-3 rounded-full bg-red-500/80" />
@@ -346,247 +404,298 @@ export const LandingPage = () => {
               </div>
             </div>
 
-            {/* Showcase Feature Tabs */}
-            <div className="flex flex-wrap items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/[0.05]">
+            {/* Interactive Module Tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 bg-white/[0.04] p-1 rounded-xl border border-white/[0.06]">
               <button
                 type="button"
                 onClick={() => setActiveShowcaseTab("dashboard")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
                   activeShowcaseTab === "dashboard"
-                    ? "bg-orange-600 text-white shadow-xs"
+                    ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-xs"
                     : "text-stone-400 hover:text-white"
                 }`}
               >
-                Dashboard
+                📊 Dashboard
               </button>
               <button
                 type="button"
                 onClick={() => setActiveShowcaseTab("parser")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
                   activeShowcaseTab === "parser"
-                    ? "bg-orange-600 text-white shadow-xs"
+                    ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-xs"
                     : "text-stone-400 hover:text-white"
                 }`}
               >
-                Statement Ingestion
+                📄 Statement Ingestion
               </button>
               <button
                 type="button"
                 onClick={() => setActiveShowcaseTab("dedup")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
                   activeShowcaseTab === "dedup"
-                    ? "bg-orange-600 text-white shadow-xs"
+                    ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-xs"
                     : "text-stone-400 hover:text-white"
                 }`}
               >
-                Zero Duplicates
+                🛡️ Zero-Duplicate Guard
               </button>
               <button
                 type="button"
                 onClick={() => setActiveShowcaseTab("copilot")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
                   activeShowcaseTab === "copilot"
-                    ? "bg-orange-600 text-white shadow-xs"
+                    ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-xs"
                     : "text-stone-400 hover:text-white"
                 }`}
               >
-                AI Financial Chat
+                🤖 AI Copilot Chat
               </button>
             </div>
           </div>
 
-          {/* Interactive Screen Display */}
-          <div className="relative rounded-2xl border border-white/[0.05] bg-[#080b11] p-6 lg:p-8 min-h-[420px] flex flex-col justify-between">
-            {activeShowcaseTab === "dashboard" && (
-              <div className="space-y-6 animate-in fade-in duration-300">
-                {/* 5 Summary Metric Cards Mockup */}
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
-                  <div className="rounded-xl border border-orange-500/30 bg-orange-950/20 p-4 relative overflow-hidden">
-                    <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-500 absolute top-0 inset-x-0" />
-                    <span className="text-[10px] font-bold text-stone-400 uppercase">Total Balance</span>
-                    <div className="text-xl font-bold font-numeric text-white mt-1">₹1,94,266</div>
-                    <span className="text-[10px] text-orange-400 font-medium">Net liquidity</span>
-                  </div>
-                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4 relative overflow-hidden">
-                    <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-500 absolute top-0 inset-x-0" />
-                    <span className="text-[10px] font-bold text-stone-400 uppercase">Total Income</span>
-                    <div className="text-xl font-bold font-numeric text-emerald-400 mt-1">₹2,82,000</div>
-                    <span className="text-[10px] text-emerald-500 font-medium">+ Inflow</span>
-                  </div>
-                  <div className="rounded-xl border border-rose-500/30 bg-rose-950/20 p-4 relative overflow-hidden">
-                    <div className="h-1 bg-gradient-to-r from-rose-500 to-red-500 absolute top-0 inset-x-0" />
-                    <span className="text-[10px] font-bold text-stone-400 uppercase">Total Expense</span>
-                    <div className="text-xl font-bold font-numeric text-rose-400 mt-1">₹87,734</div>
-                    <span className="text-[10px] text-rose-500 font-medium">- Outflow</span>
-                  </div>
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 relative overflow-hidden">
-                    <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500 absolute top-0 inset-x-0" />
-                    <span className="text-[10px] font-bold text-stone-400 uppercase">This Month</span>
-                    <div className="text-xl font-bold font-numeric text-amber-400 mt-1">₹53,000</div>
-                    <span className="text-[10px] text-amber-500 font-medium">Oct 2026 cycle</span>
-                  </div>
-                  <div className="col-span-2 lg:col-span-1 rounded-xl border border-sky-500/30 bg-sky-950/20 p-4 relative overflow-hidden flex flex-col justify-between">
-                    <div className="h-1 bg-gradient-to-r from-sky-500 to-blue-500 absolute top-0 inset-x-0" />
-                    <span className="text-[10px] font-bold text-stone-400 uppercase">Budget Status</span>
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold px-2.5 py-1 border border-emerald-500/30 mt-1 w-fit">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                      On Track
+          {/* Tab 1: REAL CASHFLOW AI DASHBOARD REPLICA */}
+          {activeShowcaseTab === "dashboard" && (
+            <div className="rounded-2xl border border-stone-200/90 bg-stone-100 p-6 shadow-inner text-stone-900 bg-ledger-grid space-y-6 animate-in fade-in duration-300">
+              {/* Summary Cards with Top Accent Bars (Exact Match to App) */}
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
+                {/* Total Balance */}
+                <div className="rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs relative overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-orange-500 to-amber-500" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Total Balance</span>
+                    <div className="h-7 w-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center text-xs">
+                      <Wallet size={14} />
                     </div>
-                    <span className="text-[10px] text-stone-400 mt-1">Cap: ₹65,000</span>
                   </div>
+                  <div className="text-xl font-bold font-numeric text-stone-900 mt-2">₹1,94,266</div>
+                  <span className="text-[11px] font-medium text-orange-600 mt-1 block">Net liquidity</span>
                 </div>
 
-                {/* Split charts visual */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-bold text-stone-300">Category Expense Distribution</span>
-                      <span className="text-[11px] text-orange-400 font-medium">October 2026</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-6 py-4">
-                      <div className="h-28 w-28 rounded-full border-8 border-orange-500 border-t-emerald-500 border-l-purple-500 flex items-center justify-center">
-                        <span className="text-xs font-bold text-white">₹53,000</span>
-                      </div>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-orange-500" /> Food (38%)</div>
-                        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-purple-500" /> Bills (26%)</div>
-                        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Investment (21%)</div>
-                        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-cyan-500" /> Travel (15%)</div>
-                      </div>
+                {/* Total Income */}
+                <div className="rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs relative overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Total Income</span>
+                    <div className="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+                      <TrendingUp size={14} />
                     </div>
                   </div>
-
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-bold text-stone-300">Income vs Outflow Growth</span>
-                      <span className="text-[11px] text-emerald-400 font-mono font-bold">+₹1,06,532 Saved</span>
-                    </div>
-                    <div className="h-32 flex items-end justify-between gap-3 px-2 pt-4">
-                      {["Jul", "Aug", "Sep", "Oct"].map((m, idx) => (
-                        <div key={m} className="flex-1 flex flex-col items-center gap-1.5">
-                          <div className="w-full flex items-end justify-center gap-1.5 h-24">
-                            <div
-                              className="w-3 rounded-t bg-gradient-to-t from-emerald-600 to-emerald-400"
-                              style={{ height: `${[75, 80, 85, 90][idx]}%` }}
-                            />
-                            <div
-                              className="w-3 rounded-t bg-gradient-to-t from-rose-600 to-rose-400"
-                              style={{ height: `${[35, 45, 60, 48][idx]}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] text-stone-500">{m}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeShowcaseTab === "parser" && (
-              <div className="space-y-4 animate-in fade-in duration-300 py-4">
-                <div className="rounded-xl border-2 border-dashed border-orange-500/40 bg-orange-500/5 p-8 text-center">
-                  <div className="h-12 w-12 rounded-xl bg-orange-600/20 text-orange-400 mx-auto flex items-center justify-center mb-3">
-                    <FileText size={24} />
-                  </div>
-                  <h4 className="text-sm font-bold text-white">Drop your Bank PDF or Excel Statement</h4>
-                  <p className="text-xs text-stone-400 mt-1 max-w-md mx-auto">
-                    HDFC, SBI, ICICI, Axis, PhonePe, Google Pay, or Paytm. Our Indian financial parser
-                    translates messy UPI narrations into clean merchant records automatically.
-                  </p>
+                  <div className="text-xl font-bold font-numeric text-stone-900 mt-2">₹2,82,000</div>
+                  <span className="text-[11px] font-medium text-emerald-600 mt-1 block">+ Inflows</span>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.06] bg-black/30 p-4 divide-y divide-white/[0.04] text-xs">
-                  <div className="py-2 flex items-center justify-between">
-                    <div>
-                      <span className="font-mono text-stone-400">UPI/DR/48392019/SWIGGY/swiggy@icici</span>
-                      <div className="text-[11px] text-emerald-400 font-semibold">Parsed: Swiggy • Food</div>
+                {/* Total Expense */}
+                <div className="rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs relative overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-rose-500 to-red-500" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Total Expense</span>
+                    <div className="h-7 w-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
+                      <TrendingDown size={14} />
                     </div>
-                    <span className="font-bold text-rose-400">-₹420</span>
                   </div>
-                  <div className="py-2 flex items-center justify-between">
-                    <div>
-                      <span className="font-mono text-stone-400">ACH/CREDIT/SALARY-OCTOBER/TECHCORP</span>
-                      <div className="text-[11px] text-emerald-400 font-semibold">Parsed: Salary & Payout • Salary</div>
-                    </div>
-                    <span className="font-bold text-emerald-400">+₹95,000</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeShowcaseTab === "dedup" && (
-              <div className="space-y-4 animate-in fade-in duration-300 py-4">
-                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-                    <Copy size={20} />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-amber-200">
-                      Zero Accidental Duplicates Guard
-                    </h4>
-                    <p className="text-xs text-amber-300/80 mt-1 leading-relaxed">
-                      Every transaction is hashed with SHA-256 (Date, Amount, Account, Narration).
-                      If you accidentally submit twice or upload an overlapping bank statement,
-                      CashFlow AI catches it instantly and prompts you before saving.
-                    </p>
-                  </div>
+                  <div className="text-xl font-bold font-numeric text-stone-900 mt-2">₹87,734</div>
+                  <span className="text-[11px] font-medium text-rose-600 mt-1 block">- Outflows</span>
                 </div>
 
-                <div className="rounded-xl border border-stone-800 bg-stone-900/90 p-4 text-xs space-y-2">
-                  <div className="flex items-center justify-between font-bold text-stone-300">
-                    <span>⚠️ Duplicate Transaction Warning</span>
-                    <span className="rounded bg-amber-500/20 px-2 py-0.5 text-amber-400">Blocked</span>
+                {/* This Month */}
+                <div className="rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs relative overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-500" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">This Month</span>
+                    <div className="h-7 w-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
+                      <Receipt size={14} />
+                    </div>
                   </div>
-                  <p className="text-stone-400">
-                    A transaction for ₹1,500 on 10 Oct 2026 with description 'Grocery Shopping'
-                    already exists in your HDFC account.
-                  </p>
-                  <div className="flex items-center gap-2 pt-2">
-                    <span className="rounded bg-white/10 px-3 py-1 text-stone-300">Same One (Cancel)</span>
-                    <span className="rounded bg-amber-600 px-3 py-1 text-white font-semibold">
-                      Override & Add As New
+                  <div className="text-xl font-bold font-numeric text-stone-900 mt-2">₹53,000</div>
+                  <span className="text-[11px] font-medium text-amber-600 mt-1 block">Oct 2026 cycle</span>
+                </div>
+
+                {/* Budget Status */}
+                <div className="col-span-2 lg:col-span-1 rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs relative overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all flex flex-col justify-between">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Budget Status</span>
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  </div>
+                  <div className="mt-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      On track
                     </span>
                   </div>
+                  <span className="text-[10px] text-stone-400 mt-1">Monthly category limits</span>
                 </div>
               </div>
-            )}
 
-            {activeShowcaseTab === "copilot" && (
-              <div className="space-y-4 animate-in fade-in duration-300 py-4">
-                <div className="rounded-xl border border-white/[0.08] bg-black/40 p-4 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="h-7 w-7 rounded-lg bg-orange-600/30 text-orange-400 flex items-center justify-center shrink-0 text-xs font-bold">
-                      YOU
+              {/* Lower Charts Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Donut Chart Mockup */}
+                <div className="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-3 mb-4">
+                    <span className="text-sm font-bold text-stone-900">Expense by Category</span>
+                    <span className="text-xs text-orange-600 font-semibold bg-orange-50 px-2 py-0.5 rounded-full">
+                      October 2026
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center gap-6 py-2">
+                    <div className="h-32 w-32 rounded-full border-[12px] border-emerald-500 border-t-cyan-500 border-r-orange-500 border-b-purple-500 flex flex-col items-center justify-center shadow-xs">
+                      <span className="text-[10px] text-stone-400 uppercase font-medium">Spent</span>
+                      <span className="text-sm font-bold font-numeric text-stone-900">₹53,000</span>
                     </div>
-                    <p className="text-xs text-stone-300 bg-white/[0.04] p-2.5 rounded-xl border border-white/[0.04]">
-                      "How much did I spend on dining and groceries this month compared to last month?"
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-cyan-500" /> Transfer (78%)</div>
+                      <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Food (14%)</div>
+                      <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-orange-500" /> Travel (4%)</div>
+                      <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Bills (4%)</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bar Chart Mockup */}
+                <div className="rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-3 mb-4">
+                    <span className="text-sm font-bold text-stone-900">Monthly Income vs Expense</span>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">
+                        ● Income
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full font-bold">
+                        ● Expense
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-32 flex items-end justify-around gap-4 pt-4 px-2">
+                    {[
+                      { m: "Jul", in: 80, ex: 15 },
+                      { m: "Aug", in: 75, ex: 10 },
+                      { m: "Oct", in: 65, ex: 70 },
+                    ].map((item) => (
+                      <div key={item.m} className="flex flex-col items-center gap-1.5 flex-1">
+                        <div className="flex items-end justify-center gap-2 w-full h-24">
+                          <div
+                            className="w-5 rounded-t-lg bg-emerald-500 shadow-xs"
+                            style={{ height: `${item.in}%` }}
+                          />
+                          <div
+                            className="w-5 rounded-t-lg bg-rose-500 shadow-xs"
+                            style={{ height: `${item.ex}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-semibold text-stone-500">{item.m}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: STATEMENT INGESTION */}
+          {activeShowcaseTab === "parser" && (
+            <div className="rounded-2xl border border-white/[0.08] bg-[#090d15] p-6 lg:p-8 space-y-4 animate-in fade-in duration-300">
+              <div className="rounded-2xl border-2 border-dashed border-orange-500/40 bg-orange-500/5 p-8 text-center">
+                <div className="h-12 w-12 rounded-xl bg-orange-600/20 text-orange-400 mx-auto flex items-center justify-center mb-3">
+                  <FileText size={24} />
+                </div>
+                <h4 className="text-base font-bold text-white">Drop your Bank PDF or Excel Statement</h4>
+                <p className="text-xs text-stone-400 mt-1 max-w-md mx-auto">
+                  Compatible with HDFC, SBI, ICICI, Axis, PhonePe, Google Pay, or Paytm. Our Indian financial
+                  parser categorizes messy UPI narrations automatically.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-black/40 p-4 divide-y divide-white/[0.04] text-xs">
+                <div className="py-2.5 flex items-center justify-between">
+                  <div>
+                    <span className="font-mono text-stone-400">UPI/DR/48392019/SWIGGY/swiggy@icici</span>
+                    <div className="text-[11px] text-emerald-400 font-semibold">Parsed: Swiggy • Food & Dining</div>
+                  </div>
+                  <span className="font-bold text-rose-400 font-numeric">-₹420</span>
+                </div>
+                <div className="py-2.5 flex items-center justify-between">
+                  <div>
+                    <span className="font-mono text-stone-400">ACH/CREDIT/SALARY-OCTOBER/TECHCORP</span>
+                    <div className="text-[11px] text-emerald-400 font-semibold">Parsed: Salary & Payout • Salary</div>
+                  </div>
+                  <span className="font-bold text-emerald-400 font-numeric">+₹95,000</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: ZERO DUPLICATES */}
+          {activeShowcaseTab === "dedup" && (
+            <div className="rounded-2xl border border-white/[0.08] bg-[#090d15] p-6 lg:p-8 space-y-4 animate-in fade-in duration-300">
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 flex items-start gap-4">
+                <div className="h-10 w-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                  <Copy size={20} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-amber-200">
+                    Zero Accidental Duplicates Guard
+                  </h4>
+                  <p className="text-xs text-amber-300/80 mt-1 leading-relaxed">
+                    Every transaction is protected by a cryptographic hash (Date, Amount, Account, Narration).
+                    If an identical transaction is submitted or uploaded via statement, it is flagged and blocked
+                    before saving.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-stone-800 bg-stone-900/90 p-4 text-xs space-y-2">
+                <div className="flex items-center justify-between font-bold text-stone-300">
+                  <span>⚠️ Duplicate Transaction Warning</span>
+                  <span className="rounded bg-amber-500/20 px-2 py-0.5 text-amber-400">Blocked</span>
+                </div>
+                <p className="text-stone-400">
+                  A transaction for ₹1,500 on 10 Oct 2026 with description 'Grocery Shopping'
+                  already exists in your account.
+                </p>
+                <div className="flex items-center gap-2 pt-2">
+                  <span className="rounded bg-white/10 px-3 py-1 text-stone-300">Cancel / Same One</span>
+                  <span className="rounded bg-amber-600 px-3 py-1 text-white font-semibold">
+                    Override & Add As New
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 4: AI COPILOT CHAT */}
+          {activeShowcaseTab === "copilot" && (
+            <div className="rounded-2xl border border-white/[0.08] bg-[#090d15] p-6 lg:p-8 space-y-4 animate-in fade-in duration-300">
+              <div className="rounded-xl border border-white/[0.08] bg-black/40 p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-7 w-7 rounded-lg bg-orange-600/30 text-orange-400 flex items-center justify-center shrink-0 text-xs font-bold">
+                    YOU
+                  </div>
+                  <p className="text-xs text-stone-300 bg-white/[0.04] p-2.5 rounded-xl border border-white/[0.04]">
+                    "How much did I spend on dining and groceries this month compared to last month?"
+                  </p>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="h-7 w-7 rounded-lg bg-emerald-600/30 text-emerald-400 flex items-center justify-center shrink-0 text-xs font-bold">
+                    <Bot size={14} />
+                  </div>
+                  <div className="text-xs text-stone-200 bg-emerald-950/20 p-3 rounded-xl border border-emerald-500/20 space-y-1.5">
+                    <p>
+                      In <strong>October 2026</strong>, you spent <strong>₹17,570</strong> on Food &
+                      Groceries across 14 transactions (mostly Swiggy and Zepto).
+                    </p>
+                    <p className="text-emerald-400 font-semibold">
+                      📉 That is 18% lower than September (₹21,400). You are well within your ₹20,000
+                      category budget!
                     </p>
                   </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-7 w-7 rounded-lg bg-emerald-600/30 text-emerald-400 flex items-center justify-center shrink-0 text-xs font-bold">
-                      <Bot size={14} />
-                    </div>
-                    <div className="text-xs text-stone-200 bg-emerald-950/20 p-3 rounded-xl border border-emerald-500/20 space-y-1.5">
-                      <p>
-                        In <strong>October 2026</strong>, you spent <strong>₹17,570</strong> on Food &
-                        Groceries across 14 transactions (mostly Swiggy and Zepto).
-                      </p>
-                      <p className="text-emerald-400 font-semibold">
-                        📉 That is 18% lower than September (₹21,400). You are well within your ₹20,000
-                        category budget!
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* CORE CLASSY FEATURES SECTION */}
+      {/* CORE FEATURES GRID */}
       <section id="features" className="py-24 px-6 lg:px-10 max-w-7xl mx-auto border-t border-white/[0.06]">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="text-xs font-mono uppercase tracking-widest text-orange-400">
@@ -596,7 +705,7 @@ export const LandingPage = () => {
             Finance tools built for people who care about details.
           </h2>
           <p className="text-stone-400 text-sm sm:text-base mt-4">
-            No bloated menus. No ads selling credit cards. Pure financial intelligence.
+            Zero ads. No credit card upsells. Pure financial engineering.
           </p>
         </div>
 
@@ -647,7 +756,7 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* CLASSY PRICING SECTION */}
+      {/* PRICING SECTION */}
       <section id="pricing" className="py-24 px-6 lg:px-10 max-w-7xl mx-auto border-t border-white/[0.06]">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="text-xs font-mono uppercase tracking-widest text-orange-400">
@@ -923,14 +1032,14 @@ export const LandingPage = () => {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/[0.08] bg-[#05070a] py-14 px-6 lg:px-10">
+      <footer className="border-t border-white/[0.08] bg-[#06080d] py-14 px-6 lg:px-10">
         <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-stone-400">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600 text-white font-bold">
               <Sparkles size={16} />
             </div>
             <div>
-              <span className="font-bold text-white">CashFlow AI</span> — High-Profile Personal Finance
+              <span className="font-bold text-white">CashFlow AI</span> — Financial Clarity, Engineered for Velocity
             </div>
           </div>
 
