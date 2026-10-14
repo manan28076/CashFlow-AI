@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-10-14T10:34:40.726Z",
+  "gitCommit": "b32f75a",
+  "model": "gemini-2.5-flash",
+  "suites": {
+    "anomaly": {
+      "total": 5,
+      "passed": 5,
+      "accuracy": 100,
+      "avgLatencyMs": 4.8,
+      "results": [
+        {
+          "id": "anomaly_01",
+          "name": "Modified Z-score statistical outlier",
+          "pass": true,
+          "latencyMs": 23
+        },
+        {
+          "id": "anomaly_02",
+          "name": "Zero MAD IQR fallback outlier",
+          "pass": true,
+          "latencyMs": 1
+        },
+        {
+          "id": "anomaly_03",
+          "name": "Exact duplicate transaction detection within 24h",
+          "pass": true,
+          "latencyMs": 0
+        },
+        {
+          "id": "anomaly_04",
+          "name": "Insufficient history gate",
+          "pass": true,
+          "latencyMs": 0
+        },
+        {
+          "id": "anomaly_05",
+          "name": "Normal consistent spending baseline",
+          "pass": true,
+          "latencyMs": 0
+        }
+      ]
+    }
+  },
+  "categories": {},
+  "summary": {
+    "totalEvaluated": 5,
+    "totalPassed": 5,
+    "overallAccuracy": 100
+  }
+}

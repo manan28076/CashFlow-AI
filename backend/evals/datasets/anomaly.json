@@ -1,0 +1,75 @@
+[
+  {
+    "id": "anomaly_01",
+    "name": "Modified Z-score statistical outlier",
+    "description": "Category with 8 historical transactions around 400-600, plus an injected 15000 transaction",
+    "transactions": [
+      { "id": "t1", "amount": 450, "merchant": "Swiggy", "category": "Food", "date": "2026-03-01T12:00:00Z" },
+      { "id": "t2", "amount": 500, "merchant": "Zomato", "category": "Food", "date": "2026-03-03T12:00:00Z" },
+      { "id": "t3", "amount": 550, "merchant": "Starbucks", "category": "Food", "date": "2026-03-05T12:00:00Z" },
+      { "id": "t4", "amount": 480, "merchant": "Swiggy", "category": "Food", "date": "2026-03-07T12:00:00Z" },
+      { "id": "t5", "amount": 520, "merchant": "Domino's", "category": "Food", "date": "2026-03-09T12:00:00Z" },
+      { "id": "t6", "amount": 500, "merchant": "Burger King", "category": "Food", "date": "2026-03-11T12:00:00Z" },
+      { "id": "t7", "amount": 490, "merchant": "Subway", "category": "Food", "date": "2026-03-13T12:00:00Z" },
+      { "id": "t8", "amount": 15000, "merchant": "Luxury Dining", "category": "Food", "date": "2026-03-15T12:00:00Z" }
+    ],
+    "expectedFlaggedIds": ["t8"],
+    "expectedMethods": { "t8": "zscore" }
+  },
+  {
+    "id": "anomaly_02",
+    "name": "Zero MAD IQR fallback outlier",
+    "description": "Category with identical amounts where MAD=0, plus an injected spike",
+    "transactions": [
+      { "id": "t1", "amount": 300, "merchant": "Netflix", "category": "Entertainment", "date": "2026-01-01T00:00:00Z" },
+      { "id": "t2", "amount": 300, "merchant": "Netflix", "category": "Entertainment", "date": "2026-02-01T00:00:00Z" },
+      { "id": "t3", "amount": 300, "merchant": "Netflix", "category": "Entertainment", "date": "2026-03-01T00:00:00Z" },
+      { "id": "t4", "amount": 300, "merchant": "Netflix", "category": "Entertainment", "date": "2026-04-01T00:00:00Z" },
+      { "id": "t5", "amount": 300, "merchant": "Netflix", "category": "Entertainment", "date": "2026-05-01T00:00:00Z" },
+      { "id": "t6", "amount": 4500, "merchant": "Concert VIP", "category": "Entertainment", "date": "2026-05-15T00:00:00Z" }
+    ],
+    "expectedFlaggedIds": ["t6"],
+    "expectedMethods": { "t6": "iqr" }
+  },
+  {
+    "id": "anomaly_03",
+    "name": "Exact duplicate transaction detection within 24h",
+    "description": "Two transactions with identical amount and normalized merchant within 24 hours",
+    "transactions": [
+      { "id": "t1", "amount": 2500, "merchant": "Amazon", "category": "Shopping", "date": "2026-03-10T10:00:00Z" },
+      { "id": "t2", "amount": 2500, "merchant": "UPI/AMAZON/992818", "category": "Shopping", "date": "2026-03-10T10:05:00Z" },
+      { "id": "t3", "amount": 1200, "merchant": "Flipkart", "category": "Shopping", "date": "2026-03-12T14:00:00Z" },
+      { "id": "t4", "amount": 800, "merchant": "Myntra", "category": "Shopping", "date": "2026-03-14T16:00:00Z" },
+      { "id": "t5", "amount": 1500, "merchant": "Zara", "category": "Shopping", "date": "2026-03-16T18:00:00Z" }
+    ],
+    "expectedFlaggedIds": ["t2"],
+    "expectedMethods": { "t2": "duplicate" }
+  },
+  {
+    "id": "anomaly_04",
+    "name": "Insufficient history gate",
+    "description": "Category with fewer than 5 transactions should not flag statistical outliers",
+    "transactions": [
+      { "id": "t1", "amount": 500, "merchant": "Coursera", "category": "Education", "date": "2026-03-01T00:00:00Z" },
+      { "id": "t2", "amount": 600, "merchant": "Udemy", "category": "Education", "date": "2026-03-05T00:00:00Z" },
+      { "id": "t3", "amount": 25000, "merchant": "Executive MBA", "category": "Education", "date": "2026-03-10T00:00:00Z" }
+    ],
+    "expectedFlaggedIds": [],
+    "expectedMethods": {}
+  },
+  {
+    "id": "anomaly_05",
+    "name": "Normal consistent spending baseline",
+    "description": "All transactions are routine without any outliers or duplicates",
+    "transactions": [
+      { "id": "t1", "amount": 350, "merchant": "Uber", "category": "Travel", "date": "2026-03-01T09:00:00Z" },
+      { "id": "t2", "amount": 420, "merchant": "Ola", "category": "Travel", "date": "2026-03-03T09:00:00Z" },
+      { "id": "t3", "amount": 380, "merchant": "Uber", "category": "Travel", "date": "2026-03-05T09:00:00Z" },
+      { "id": "t4", "amount": 400, "merchant": "Rapido", "category": "Travel", "date": "2026-03-07T09:00:00Z" },
+      { "id": "t5", "amount": 450, "merchant": "Ola", "category": "Travel", "date": "2026-03-09T09:00:00Z" },
+      { "id": "t6", "amount": 390, "merchant": "Uber", "category": "Travel", "date": "2026-03-11T09:00:00Z" }
+    ],
+    "expectedFlaggedIds": [],
+    "expectedMethods": {}
+  }
+]

@@ -1,0 +1,137 @@
+[
+  {
+    "id": "agent_01",
+    "question": "How much did I spend on Food in March 2026, and how does it compare to my budget?",
+    "expectedTools": ["get_budgets", "run_sql"],
+    "expectedValues": {
+      "budget": 15000,
+      "spent": 7390,
+      "remaining": 7610
+    }
+  },
+  {
+    "id": "agent_02",
+    "question": "What is my total income and total expense for March 2026, and what is my net savings?",
+    "expectedTools": ["get_spending_summary"],
+    "expectedValues": {
+      "totalIncome": 155000,
+      "totalExpense": 43075,
+      "netSavings": 111925
+    }
+  },
+  {
+    "id": "agent_03",
+    "question": "What was my highest single expense in March 2026, and which merchant was it?",
+    "expectedTools": ["run_sql"],
+    "expectedValues": {
+      "highestExpense": 15000
+    }
+  },
+  {
+    "id": "agent_04",
+    "question": "Check my Shopping budget for March 2026 and tell me how much I have left.",
+    "expectedTools": ["get_budgets", "run_sql"],
+    "expectedValues": {
+      "budget": 10000,
+      "spent": 7988,
+      "remaining": 2012
+    }
+  },
+  {
+    "id": "agent_05",
+    "question": "How much did I spend on Travel in March 2026 across Uber, Ola, and flights?",
+    "expectedTools": ["run_sql"],
+    "expectedValues": {
+      "travelSpent": 5370
+    }
+  },
+  {
+    "id": "agent_06",
+    "question": "Forecast my Food spending for next month based on my current spending run-rate.",
+    "expectedTools": ["forecast_spending"],
+    "expectedValues": {
+      "forecastHorizonDays": 30
+    }
+  },
+  {
+    "id": "agent_07",
+    "question": "Add a transaction of 450 rupees for lunch at Subway today.",
+    "expectedTools": ["add_transaction"],
+    "expectedValues": {
+      "amount": 450,
+      "type": "EXPENSE"
+    }
+  },
+  {
+    "id": "agent_08",
+    "question": "Set a new monthly budget of 8000 rupees for Travel next month.",
+    "expectedTools": ["create_budget"],
+    "expectedValues": {
+      "amount": 8000
+    }
+  },
+  {
+    "id": "agent_09",
+    "question": "List all my utility bills in March 2026 and their total amount.",
+    "expectedTools": ["run_sql"],
+    "expectedValues": {
+      "totalBills": 4129
+    }
+  },
+  {
+    "id": "agent_10",
+    "question": "How much did I spend on entertainment subscriptions like Netflix and Spotify in March 2026?",
+    "expectedTools": ["run_sql"],
+    "expectedValues": {
+      "netflixAmount": 649,
+      "spotifyAmount": 119
+    }
+  },
+  {
+    "id": "agent_11",
+    "question": "Give me a category-by-category breakdown of my spending from March 1 to March 31 2026.",
+    "expectedTools": ["get_spending_summary"],
+    "expectedValues": {
+      "food": 7390,
+      "shopping": 7988,
+      "travel": 5370,
+      "bills": 4129,
+      "investment": 15000
+    }
+  },
+  {
+    "id": "agent_12",
+    "question": "What is my average transaction amount for Food dining and deliveries in March 2026?",
+    "expectedTools": ["run_sql"],
+    "expectedValues": {
+      "averageFood": 1478
+    }
+  },
+  {
+    "id": "agent_13",
+    "question": "How much money did I invest in mutual funds in March 2026?",
+    "expectedTools": ["run_sql"],
+    "expectedValues": {
+      "investmentTotal": 15000
+    }
+  },
+  {
+    "id": "agent_14",
+    "question": "Did I stay within my Entertainment budget in March 2026?",
+    "expectedTools": ["get_budgets", "run_sql"],
+    "expectedValues": {
+      "budget": 2500,
+      "spent": 1748,
+      "remaining": 752
+    }
+  },
+  {
+    "id": "agent_15",
+    "question": "Compare my Food spending between February 2026 and March 2026.",
+    "expectedTools": ["run_sql"],
+    "expectedValues": {
+      "febFood": 620,
+      "marFood": 7390
+    }
+  }
+]

@@ -1,0 +1,73 @@
+[
+  { "id": "cat_01", "merchant": "SWIGGY BANGALORE", "description": "UPI/SWIGGY/409281928/swiggy@icici", "expectedCategory": "Food" },
+  { "id": "cat_02", "merchant": "ZOMATO RESTAURANTS", "description": "POS 412938 ZOMATO ONLINE ORDER GURGAON", "expectedCategory": "Food" },
+  { "id": "cat_03", "merchant": "STARBUCKS COFFEE", "description": "TATA STARBUCKS KORAMANGALA BLR", "expectedCategory": "Food" },
+  { "id": "cat_04", "merchant": "MCDONALDS RESTAURANT", "description": "HARDCASTLE RESTAURANTS MCDONALDS PUNE", "expectedCategory": "Food" },
+  { "id": "cat_05", "merchant": "DOMINOS PIZZA", "description": "JUBILANT FOODWORKS DOMINOS NOIDA", "expectedCategory": "Food" },
+  { "id": "cat_06", "merchant": "CHAAYOS", "description": "SUNSHINE TEAHOUSE CHAAYOS INDIRANAGAR", "expectedCategory": "Food" },
+  { "id": "cat_07", "merchant": "BURGER KING INDIA", "description": "UPI/BURGERKING/992818/merchant@paytm", "expectedCategory": "Food" },
+
+  { "id": "cat_08", "merchant": "AMAZON SELLER SERVICES", "description": "AMAZON PAY INDIA MUMBAI CARD PURCHASE", "expectedCategory": "Shopping" },
+  { "id": "cat_09", "merchant": "FLIPKART INTERNET", "description": "FLIPKART INTERNET PVT LTD BANGALORE", "expectedCategory": "Shopping" },
+  { "id": "cat_10", "merchant": "MYNTRA DESIGNS", "description": "MYNTRA APPAREL ONLINE STORE", "expectedCategory": "Shopping" },
+  { "id": "cat_11", "merchant": "ZARA RETAIL", "description": "ZARA INDITEX TRENT FORUM MALL", "expectedCategory": "Shopping" },
+  { "id": "cat_12", "merchant": "H&M HENNES MAURITZ", "description": "H&M RETAIL AMBIENCE MALL GURGAON", "expectedCategory": "Shopping" },
+  { "id": "cat_13", "merchant": "CROMA ELECTRONICS", "description": "INFINITI RETAIL LTD CROMA STORE", "expectedCategory": "Shopping" },
+  { "id": "cat_14", "merchant": "DECATHLON SPORTS", "description": "DECATHLON SPORTS WHITEFIELD BLR", "expectedCategory": "Shopping" },
+  { "id": "cat_15", "merchant": "AJIO ONLINE", "description": "RELIANCE RETAIL AJIO FASHION", "expectedCategory": "Shopping" },
+
+  { "id": "cat_16", "merchant": "UBER INDIA SYSTEMS", "description": "UBER TRIP HELP.UBER.COM NL BLR", "expectedCategory": "Travel" },
+  { "id": "cat_17", "merchant": "OLA CABS", "description": "ANI TECHNOLOGIES OLA CABS TRIP 99182", "expectedCategory": "Travel" },
+  { "id": "cat_18", "merchant": "INDIGO AIRLINES", "description": "INTERGLOBE AVIATION INDIGO FLIGHT", "expectedCategory": "Travel" },
+  { "id": "cat_19", "merchant": "AIR INDIA", "description": "AIR INDIA TICKETING ONLINE NEW DELHI", "expectedCategory": "Travel" },
+  { "id": "cat_20", "merchant": "IRCTC RAILWAY", "description": "IRCTC E-TICKETING NEW DELHI RAILWAY", "expectedCategory": "Travel" },
+  { "id": "cat_21", "merchant": "MAKEMYTRIP INDIA", "description": "MMT HOTEL AND FLIGHT BOOKING GURGAON", "expectedCategory": "Travel" },
+  { "id": "cat_22", "merchant": "RAPIDO BIKE TAXI", "description": "ROPPEN TRANSPORTATION RAPIDO RIDE", "expectedCategory": "Travel" },
+
+  { "id": "cat_23", "merchant": "NETFLIX ENTERTAINMENT", "description": "NETFLIX ENTERTAINMENT SERVICES INDIA", "expectedCategory": "Entertainment" },
+  { "id": "cat_24", "merchant": "SPOTIFY INDIA", "description": "SPOTIFY AB PREMIUM SUBSCRIPTION MONTHLY", "expectedCategory": "Entertainment" },
+  { "id": "cat_25", "merchant": "PVR INOX CINEMAS", "description": "PVR LIMITED MOVIE TICKETS FORUM", "expectedCategory": "Entertainment" },
+  { "id": "cat_26", "merchant": "BOOKMYSHOW", "description": "BIGTREE ENTERTAINMENT BOOKMYSHOW", "expectedCategory": "Entertainment" },
+  { "id": "cat_27", "merchant": "DISNEY HOTSTAR", "description": "NOVI DIGITAL HOTSTAR SUPER PLAN", "expectedCategory": "Entertainment" },
+  { "id": "cat_28", "merchant": "SONY LIV", "description": "CULVER MAX SONYLIV SUBSCRIPTION", "expectedCategory": "Entertainment" },
+
+  { "id": "cat_29", "merchant": "BESCOM ELECTRICITY", "description": "BANGALORE ELECTRICITY SUPPLY CO BESCOM", "expectedCategory": "Bills" },
+  { "id": "cat_30", "merchant": "ACT FIBERNET", "description": "ACT BROADBAND BEAM TELECOM BILL", "expectedCategory": "Bills" },
+  { "id": "cat_31", "merchant": "AIRTEL POSTPAID", "description": "BHARTI AIRTEL LIMITED TELECOM BILL", "expectedCategory": "Bills" },
+  { "id": "cat_32", "merchant": "JIO PREPAID / POSTPAID", "description": "RELIANCE JIO INFOCOMM MUMBAI BILL", "expectedCategory": "Bills" },
+  { "id": "cat_33", "merchant": "TATA POWER DELHI", "description": "TATA POWER DDL MONTHLY UTILITY", "expectedCategory": "Bills" },
+  { "id": "cat_34", "merchant": "MAHAGAS PIPED GAS", "description": "MAHANAGAR GAS LIMITED PNG UTILITY BILL", "expectedCategory": "Bills" },
+
+  { "id": "cat_35", "merchant": "APOLLO PHARMACY", "description": "APOLLO PHARMACIES HEALTH MEDICINES", "expectedCategory": "Healthcare" },
+  { "id": "cat_36", "merchant": "MEDPLUS PHARMACY", "description": "OPTIVAL HEALTH SOLUTIONS MEDPLUS PHARMA", "expectedCategory": "Healthcare" },
+  { "id": "cat_37", "merchant": "PHARMEASY ONLINE", "description": "API HOLDINGS PHARMEASY MEDICINE ORDER", "expectedCategory": "Healthcare" },
+  { "id": "cat_38", "merchant": "1MG HEALTHCARE", "description": "TATA 1MG HEALTHCARE DIAGNOSTICS LAB", "expectedCategory": "Healthcare" },
+  { "id": "cat_39", "merchant": "MANIPAL HOSPITAL", "description": "MANIPAL HEALTH ENTERPRISES HOSPITAL BLR", "expectedCategory": "Healthcare" },
+  { "id": "cat_40", "merchant": "MAX HEALTHCARE", "description": "MAX HEALTHCARE INSTITUTE CLINIC NEW DELHI", "expectedCategory": "Healthcare" },
+
+  { "id": "cat_41", "merchant": "COURSERA INC", "description": "COURSERA ONLINE LEARNING SUBSCRIPTION", "expectedCategory": "Education" },
+  { "id": "cat_42", "merchant": "UDEMY ONLINE", "description": "UDEMY COURSE WEB DEVELOPMENT PURCHASE", "expectedCategory": "Education" },
+  { "id": "cat_43", "merchant": "UNACADEMY", "description": "SORTING HAT TECHNOLOGIES UNACADEMY PLUS", "expectedCategory": "Education" },
+  { "id": "cat_44", "merchant": "UPGRAD EDUCATION", "description": "UPGRAD EDUCATION PRIVATE LIMITED DEGREE", "expectedCategory": "Education" },
+
+  { "id": "cat_45", "merchant": "ZERODHA BROKING", "description": "ZERODHA COMMODITIES BROKING SIP FUNDS", "expectedCategory": "Investment" },
+  { "id": "cat_46", "merchant": "GROWW INVESTMENTS", "description": "NEXTBILLION TECHNOLOGY GROWW MUTUAL FUNDS", "expectedCategory": "Investment" },
+  { "id": "cat_47", "merchant": "KFIN TECHNOLOGIES", "description": "KFINTECH MUTUAL FUND INVESTMENT ACH", "expectedCategory": "Investment" },
+  { "id": "cat_48", "merchant": "CAMS MUTUAL FUND", "description": "COMPUTER AGE MANAGEMENT SERVICES CAMS", "expectedCategory": "Investment" },
+  { "id": "cat_49", "merchant": "ANGEL ONE", "description": "ANGEL ONE LIMITED EQUITY TRADING ACC", "expectedCategory": "Investment" },
+
+  { "id": "cat_50", "merchant": "SALARY INFOSYS LTD", "description": "NEFT CR-INFOSYS TECHNOLOGIES-SALARY MAR2026", "expectedCategory": "Salary" },
+  { "id": "cat_51", "merchant": "SALARY TCS LTD", "description": "CMS/SALARY CREDIT TATA CONSULTANCY SERVICES", "expectedCategory": "Salary" },
+  { "id": "cat_52", "merchant": "SALARY WIPRO LIMITED", "description": "SALARY DISBURSEMENT WIPRO MAR 2026", "expectedCategory": "Salary" },
+  { "id": "cat_53", "merchant": "SALARY ACCENTURE", "description": "ACH CR ACCENTURE SERVICES MONTHLY PAYROLL", "expectedCategory": "Salary" },
+
+  { "id": "cat_54", "merchant": "UPWORK GLOBAL", "description": "UPWORK ESCROW FREELANCE CLIENT INVOICE", "expectedCategory": "Freelance" },
+  { "id": "cat_55", "merchant": "FIVERR INTERNATIONAL", "description": "FIVERR INC PAYOUT FOR LOGO DESIGN", "expectedCategory": "Freelance" },
+  { "id": "cat_56", "merchant": "TOPTHAL FREELANCING", "description": "TOP WIRE TRANSFER SOFTWARE CONSULTING", "expectedCategory": "Freelance" },
+
+  { "id": "cat_57", "merchant": "SELF TRANSFER TO ICICI", "description": "IMPS FUNDS TRANSFER TO OWN ACCOUNT 50291", "expectedCategory": "Transfer" },
+  { "id": "cat_58", "merchant": "TRANSFER TO PARENT", "description": "NEFT SENT TO FATHER SAVINGS ACCOUNT", "expectedCategory": "Transfer" },
+
+  { "id": "cat_59", "merchant": "LOCAL TAILOR SHOP", "description": "UPI/SHARMA/991283/CLOTH STITCHING", "expectedCategory": "Other" },
+  { "id": "cat_60", "merchant": "MUNICIPAL PARKING FEE", "description": "CASH/POS BBMP SMART PARKING MG ROAD", "expectedCategory": "Other" }
+]

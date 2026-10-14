@@ -258,3 +258,28 @@ Verified directly from `backend/node_modules/@google/genai` source (`dist/index.
 - **Verification**:
   - `backend/tests/ai.sqlGuard.test.js` (27 tests) and `backend/tests/ai.financeAgent.test.js` (5 suites, 5 tests).
   - Total test suite: 78 passing tests, 0 failing across 22 suites. `npx prisma validate` passed.
+---
+
+## Phase 5: Evaluation Harness Summary
+- **Deterministic Fixtures (`evals/fixtures/seedEval.js`)**:
+  - Seeds an isolated test user, account, categories, budgets, and 26 realistic transactions in an isolated evaluation database.
+  - Strict guardrails: refuses to execute if `DATABASE_URL_EVAL` is missing, if it matches production `DATABASE_URL`, or if `NODE_ENV === "production"`.
+- **Benchmark Datasets (`evals/datasets/`)**:
+  - `text2sql.json`: 40 benchmark questions across 8 categories (`simple_filter`, `aggregation`, `date_range`, `group_by`, `ranking`, `multi_condition`, `unanswerable`, `adversarial`) with human-written reference SQL and rejection flags.
+  - `categorization.json`: 60 labeled transactions from Indian statement narrations mapped to the 12 seeded database categories.
+  - `anomaly.json`: 5 labeled series with known injected statistical outliers (modified Z-score), zero-MAD IQR fallbacks, exact 24h duplicates, and minimum history gates.
+  - `agent.json`: 15 multi-step questions with expected tool sequence trajectories and ground-truth values computed from fixtures.
+- **Execution-Based Scoring Engine (`evals/scoring.js`)**:
+  - Compares query result sets semantically using order-insensitive multiset matching, numeric tolerance handling (0.05 / 2 decimal places), and column casing normalization. Never compares raw SQL strings.
+  - Verifies adversarial prompt rejection.
+  - Trajectory scoring: validates required tool invocation and numerical answer accuracy.
+- **Comparison Engine (`evals/compare.js`)**:
+  - Calculates run-to-run deltas for overall accuracy, per-suite accuracy, per-category accuracy, and latency.
+- **CLI Runner (`evals/runner.js`)**:
+  - Added `npm run eval` to `package.json` supporting `--suite`, `--limit`, `--concurrency`, `--model`, and `--compare`.
+  - Saves benchmark results to `backend/evals/results/<timestamp>.json` and updates `backend/evals/results/latest-summary.json`.
+- **Documentation (`docs/EVAL_RESULTS.md`)**:
+  - Empirical results documented honestly: Anomaly suite achieved 100.0% accuracy (5/5). Database-dependent and API-dependent suites explicitly marked as "not yet run" awaiting isolated database infrastructure.
+- **Verification**:
+  - `backend/tests/ai.evalScoring.test.js`: 17 unit tests verifying scoring normalization, multiset comparison, categorization, anomaly matching, agent trajectory scoring, and delta calculation. All 17 passed.
+  - Total test suite: 95 passing tests, 0 failing across 29 suites. `npx prisma validate` passed.

@@ -14,3 +14,7 @@ node_modules/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Evaluation results
+evals/results/*.json
+!evals/results/latest-summary.json
