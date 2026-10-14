@@ -268,8 +268,9 @@ Critical Operating Guidelines:
 1. Grounding: Answer ONLY from verified tool results. NEVER invent numbers, account balances, transaction records, or tax rules.
 2. Incomplete Data: If data is missing or not returned by tools, clearly say "Data not found" or describe what is missing.
 3. Write Safety: When the user asks to add a transaction or budget, call the appropriate write tool (add_transaction or create_budget). Note to the user that write operations require their manual confirmation before execution.
-4. Professional Style: Keep responses concise, well-structured with bullet points and bold financial figures in INR (₹).
-5. Tax Queries (RAG): When answering questions regarding Indian income tax, deductions, slabs, or compliance, call search_tax_knowledge. Answer strictly from retrieved chunk text. You MUST cite the title, sourceUrl, and financialYear of the chunks used. If sources are absent or the knowledge base is empty, say "Information not found in official tax sources". Always append: "Note: This information is for general educational purposes only and does not constitute professional tax advice."
+4. Tool Selection: For general spending, category, or merchant queries (e.g., "How much did I spend?", "What is my biggest expense?", "Spending by category"), use get_spending_summary(from, to, groupBy) as it directly computes verified totals. If writing SQL with run_sql, use standard PostgreSQL dialect (e.g., DATE_TRUNC, CURRENT_DATE; never SQLite strftime). Once you receive the tool output with the relevant numbers, immediately synthesize your final answer and present it clearly to the user.
+5. Professional Style: Keep responses concise, well-structured with bullet points and bold financial figures in INR (₹).
+6. Tax Queries (RAG): When answering questions regarding Indian income tax, deductions, slabs, or compliance, call search_tax_knowledge. Answer strictly from retrieved chunk text. You MUST cite the title, sourceUrl, and financialYear of the chunks used. If sources are absent or the knowledge base is empty, say "Information not found in official tax sources". Always append: "Note: This information is for general educational purposes only and does not constitute professional tax advice."
 `.trim();
 
 /**
@@ -351,6 +352,15 @@ const runFinanceAgent = async ({ message, conversationHistory = [], userId }) =>
       finalAnswer = response?.text || "I have analyzed your request based on available records.";
       break;
     }
+
+    // Preserve model turn with complete candidate parts (including thoughtSignature & call IDs)
+    const modelTurn = response?.candidates?.[0]?.content || {
+      role: "model",
+      parts: functionCalls.map((c) => ({ functionCall: c })),
+    };
+    contents.push(modelTurn);
+
+    const toolResponseParts = [];
 
     // Process function calls
     for (const call of functionCalls) {
@@ -487,14 +497,20 @@ const runFinanceAgent = async ({ message, conversationHistory = [], userId }) =>
         latencyMs: toolLatency,
       });
 
-      // Append model call and tool response to conversation turns
-      contents.push({
-        role: "model",
-        parts: [{ functionCall: { name: toolName, args: rawArgs } }],
+      toolResponseParts.push({
+        functionResponse: {
+          name: toolName,
+          ...(call.id ? { id: call.id } : {}),
+          response: { output: toolResult },
+        },
       });
+    }
+
+    // Append function response turn to conversation contents
+    if (toolResponseParts.length > 0) {
       contents.push({
         role: "user",
-        parts: [{ functionResponse: { name: toolName, response: { output: toolResult } } }],
+        parts: toolResponseParts,
       });
     }
   }
