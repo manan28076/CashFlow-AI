@@ -1,7 +1,14 @@
 import axios, { type AxiosError } from "axios";
 
+const getBaseUrl = () => {
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_DEV_API_URL || "http://localhost:5000/api";
+  }
+  return import.meta.env.VITE_API_BASE_URL || "https://cashflow-ai-oz1i.onrender.com/api";
+};
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: getBaseUrl(),
   headers: {
     "Content-Type": "application/json",
   },

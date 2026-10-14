@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -20,24 +20,43 @@ import {
   Layers,
   FileText,
   BadgeCheck,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme, type Theme } from "../hooks/useTheme";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { cn } from "../utils/cn";
+import {
+  paymentService,
+  loadRazorpayScript,
+  type SubscriptionPaymentRecord,
+} from "../services/payment.service";
 
 export const Settings = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser, refreshUser } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
-  // Subscription state with persistence
-  const [currentPlan, setCurrentPlan] = useState<"starter" | "pro" | "family">(() => {
-    const saved = localStorage.getItem("cashflow_user_plan");
-    return (saved as "starter" | "pro" | "family") || "starter";
-  });
+  // Database-backed plan is the single source of truth
+  const currentPlan = ((user?.plan as string) || "STARTER").toLowerCase() as
+    | "starter"
+    | "pro"
+    | "family";
   const [isAnnual, setIsAnnual] = useState(true);
+
+  // Live Subscription Details from PostgreSQL
+  const [subscriptionData, setSubscriptionData] = useState<{
+    daysRemaining: number;
+    payments: SubscriptionPaymentRecord[];
+  }>({
+    daysRemaining: 0,
+    payments: [],
+  });
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
 
   // Upgrade Modal state
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -51,6 +70,28 @@ export const Settings = () => {
     weeklyReport: true,
     duplicateWarnings: true,
   });
+
+  const fetchSubscriptionData = async () => {
+    try {
+      setIsLoadingSubscription(true);
+      const data = await paymentService.getSubscription();
+      if (data?.user) {
+        updateUser(data.user);
+      }
+      setSubscriptionData({
+        daysRemaining: data?.daysRemaining || 0,
+        payments: data?.payments || [],
+      });
+    } catch (err) {
+      console.warn("Could not fetch latest subscription data:", err);
+    } finally {
+      setIsLoadingSubscription(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubscriptionData();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -80,27 +121,105 @@ export const Settings = () => {
     setIsUpgradeModalOpen(true);
   };
 
-  const handleConfirmUpgrade = () => {
-    setIsProcessingPayment(true);
-    setTimeout(() => {
+  // Legit Razorpay Payment Integration with Backend Verification
+  const handleInitiateRazorpay = async () => {
+    try {
+      setIsProcessingPayment(true);
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        toast.error("Unable to load Razorpay checkout SDK. Please verify your connection.");
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      const cycle = isAnnual ? "annual" : "monthly";
+      const orderData = await paymentService.createOrder(selectedUpgradeTier, cycle);
+
+      // If live Razorpay checkout is configured and window.Razorpay is present
+      if (typeof (window as any).Razorpay !== "undefined" && !orderData.isTestMode) {
+        const options = {
+          key: orderData.keyId,
+          amount: orderData.paise,
+          currency: orderData.currency || "INR",
+          name: "CashFlow AI",
+          description: `CashFlow ${orderData.plan} Plan (${orderData.billingCycle})`,
+          order_id: orderData.orderId,
+          handler: async function (response: any) {
+            try {
+              toast.loading("Verifying cryptographic signature on backend...", { id: "payment-verify" });
+              const verified = await paymentService.verifyPayment({
+                razorpayOrderId: response.razorpay_order_id || orderData.orderId,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              });
+              updateUser(verified.user);
+              await fetchSubscriptionData();
+              setIsUpgradeModalOpen(false);
+              toast.success(`🎉 Payment verified! Welcome to CashFlow ${orderData.plan}!`, {
+                id: "payment-verify",
+                duration: 5000,
+              });
+            } catch (err: any) {
+              toast.error(err.message || "Payment verification failed", { id: "payment-verify" });
+            } finally {
+              setIsProcessingPayment(false);
+            }
+          },
+          prefill: {
+            name: user?.name || "Subscriber",
+            email: user?.email || "",
+          },
+          theme: {
+            color: "#ea580c",
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessingPayment(false);
+              toast("Checkout window closed", { icon: "ℹ️" });
+            },
+          },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on("payment.failed", function (response: any) {
+          toast.error(`Payment failed: ${response.error?.description || "Transaction declined"}`);
+          setIsProcessingPayment(false);
+        });
+        rzp.open();
+      } else {
+        // Test verification fallback for local dev when RAZORPAY_KEY_SECRET is not yet added
+        toast.loading("Verifying transaction on server...", { id: "payment-verify" });
+        const dummyPaymentId = `pay_rzp_test_${Date.now()}`;
+        const verified = await paymentService.verifyPayment({
+          razorpayOrderId: orderData.orderId,
+          razorpayPaymentId: dummyPaymentId,
+          razorpaySignature: "mock_verified_signature",
+        });
+        updateUser(verified.user);
+        await fetchSubscriptionData();
+        setIsUpgradeModalOpen(false);
+        toast.success(`🎉 Payment verified! You are now on CashFlow ${orderData.plan}!`, {
+          id: "payment-verify",
+          duration: 5000,
+        });
+        setIsProcessingPayment(false);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to initiate Razorpay checkout");
       setIsProcessingPayment(false);
-      setCurrentPlan(selectedUpgradeTier);
-      localStorage.setItem("cashflow_user_plan", selectedUpgradeTier);
-      setIsUpgradeModalOpen(false);
-      toast.success(
-        selectedUpgradeTier === "pro"
-          ? "🎉 Congratulations! You are now on Pro Copilot Plan"
-          : "🎉 Welcome to Wealth & Family Plan!",
-        { duration: 4000 }
-      );
-    }, 1200);
+    }
   };
 
-  const handleDowngradeToFree = () => {
-    if (window.confirm("Are you sure you want to switch back to the Starter Free Plan?")) {
-      setCurrentPlan("starter");
-      localStorage.setItem("cashflow_user_plan", "starter");
-      toast.success("Plan updated to Starter (Free Forever)");
+  const handleDowngradeToFree = async () => {
+    if (window.confirm("Are you sure you want to cancel your Pro subscription and revert to the Starter Free Plan?")) {
+      try {
+        const updated = await paymentService.cancelSubscription();
+        updateUser(updated);
+        await fetchSubscriptionData();
+        toast.success("Subscription cancelled. Reverted to Starter (Free Forever)");
+      } catch (err: any) {
+        toast.error(err.message || "Failed to cancel subscription");
+      }
     }
   };
 
@@ -370,9 +489,24 @@ export const Settings = () => {
                 <span className="text-xs uppercase font-mono font-bold tracking-wider text-stone-500 dark:text-slate-400">
                   Current License
                 </span>
-                <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800 text-[10px] font-bold px-2 py-0.5">
-                  Active
-                </span>
+                {currentPlan === "starter" ? (
+                  <span className="rounded-full bg-stone-100 dark:bg-slate-800 text-stone-700 dark:text-slate-300 px-2 py-0.5 text-[10px] font-bold">
+                    Free Forever
+                  </span>
+                ) : user?.subscriptionStatus === "ACTIVE" ? (
+                  <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800 text-[10px] font-bold px-2 py-0.5 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Active Subscription
+                  </span>
+                ) : user?.subscriptionStatus === "CANCELLED" ? (
+                  <span className="rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800 text-[10px] font-bold px-2 py-0.5">
+                    Cancelled (Pending Expiry)
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800 text-[10px] font-bold px-2 py-0.5">
+                    Expired
+                  </span>
+                )}
               </div>
               <h3 className="text-base font-bold text-stone-900 dark:text-white mt-0.5">
                 {currentPlan === "starter"
@@ -384,21 +518,47 @@ export const Settings = () => {
               <p className="text-xs text-stone-500 dark:text-slate-400 mt-1">
                 {currentPlan === "starter"
                   ? "Standard personal budgeting with up to 5 statement uploads per month."
-                  : "Unlimited statement ingestion, zero-duplicate guard, and 24/7 AI Copilot."}
+                  : "Unlimited statement ingestion, zero-duplicate cryptographic shield, and 24/7 AI Copilot."}
               </p>
+
+              {user?.subscriptionExpiresAt && currentPlan !== "starter" && (
+                <div className="mt-2.5 flex flex-wrap items-center gap-3 text-xs text-stone-600 dark:text-slate-300">
+                  <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
+                    <Clock size={12} />
+                    Valid until: {new Date(user.subscriptionExpiresAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <span className="text-[11px] text-stone-500 dark:text-slate-400">
+                    ({subscriptionData.daysRemaining} days remaining • {user.planBillingCycle === "annual" ? "Annual License" : "Monthly License"})
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+            <button
+              type="button"
+              onClick={fetchSubscriptionData}
+              title="Refresh subscription status from database"
+              className="p-2 rounded-xl border border-stone-200 text-stone-500 hover:text-stone-900 dark:border-slate-800 dark:text-slate-400 dark:hover:text-white transition-all"
+            >
+              <RefreshCw size={14} className={isLoadingSubscription ? "animate-spin" : ""} />
+            </button>
+
             {currentPlan !== "starter" && (
               <button
                 type="button"
                 onClick={handleDowngradeToFree}
                 className="text-xs text-stone-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition-colors"
               >
-                Downgrade to Free
+                Cancel Subscription
               </button>
             )}
+
             {currentPlan === "starter" ? (
               <button
                 type="button"
@@ -465,11 +625,7 @@ export const Settings = () => {
             <button
               type="button"
               disabled={currentPlan === "starter"}
-              onClick={() => {
-                setCurrentPlan("starter");
-                localStorage.setItem("cashflow_user_plan", "starter");
-                toast.success("Switched to Starter Plan");
-              }}
+              onClick={handleDowngradeToFree}
               className={cn(
                 "mt-6 w-full rounded-xl py-2.5 text-xs font-bold transition-all",
                 currentPlan === "starter"
@@ -641,30 +797,63 @@ export const Settings = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 dark:divide-slate-800/60">
-                <tr>
-                  <td className="py-3 font-mono font-medium text-stone-800 dark:text-slate-200">INV-2026-1049</td>
-                  <td className="py-3 text-stone-600 dark:text-slate-400">14 Oct 2026</td>
-                  <td className="py-3 font-medium text-stone-800 dark:text-slate-200">
-                    {currentPlan === "starter" ? "Starter Free License" : "Pro Copilot Subscription"}
-                  </td>
-                  <td className="py-3 font-numeric font-bold text-stone-900 dark:text-white">
-                    {currentPlan === "starter" ? "₹0" : "₹199"}
-                  </td>
-                  <td className="py-3">
-                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
-                      Paid
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => toast.success("Downloading Invoice INV-2026-1049 PDF...")}
-                      className="inline-flex items-center gap-1 text-orange-600 dark:text-blue-400 hover:underline font-semibold"
-                    >
-                      <Download size={13} /> PDF
-                    </button>
-                  </td>
-                </tr>
+                {subscriptionData.payments.length > 0 ? (
+                  subscriptionData.payments.map((p) => (
+                    <tr key={p.id}>
+                      <td className="py-3 font-mono font-medium text-stone-800 dark:text-slate-200">
+                        INV-{p.id.slice(-6).toUpperCase()}
+                      </td>
+                      <td className="py-3 text-stone-600 dark:text-slate-400">
+                        {new Date(p.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="py-3 font-medium text-stone-800 dark:text-slate-200">
+                        CashFlow {p.plan} ({p.billingCycle})
+                      </td>
+                      <td className="py-3 font-numeric font-bold text-stone-900 dark:text-white">
+                        ₹{p.amount.toLocaleString("en-IN")}
+                      </td>
+                      <td className="py-3">
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-bold border",
+                            p.status === "SUCCESS"
+                              ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                              : p.status === "FAILED"
+                              ? "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800"
+                              : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+                          )}
+                        >
+                          {p.status === "SUCCESS" ? "Paid" : p.status}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toast.success(
+                              `Receipt for ${p.plan} Plan (₹${p.amount}) Order ID: ${p.razorpayOrderId}`
+                            )
+                          }
+                          className="inline-flex items-center gap-1 text-orange-600 dark:text-blue-400 hover:underline font-semibold"
+                        >
+                          <Download size={13} /> PDF
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-stone-400 dark:text-slate-500">
+                      {currentPlan === "starter"
+                        ? "You are currently on the Starter Free Plan. No invoices charged yet."
+                        : "No invoice records found."}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -850,21 +1039,27 @@ export const Settings = () => {
             <button
               type="button"
               disabled={isProcessingPayment}
-              onClick={handleConfirmUpgrade}
+              onClick={handleInitiateRazorpay}
               className="w-full rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 py-3.5 text-xs font-bold text-white shadow-lg shadow-orange-600/25 hover:brightness-110 transition-all flex items-center justify-center gap-2"
             >
               {isProcessingPayment ? (
                 <>
                   <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Processing secure activation...</span>
+                  <span>Processing Razorpay Checkout...</span>
                 </>
               ) : (
                 <>
-                  <span>Confirm & Activate Plan</span>
+                  <ShieldCheck size={16} />
+                  <span>Pay & Activate via Razorpay</span>
                   <ArrowRight size={14} />
                 </>
               )}
             </button>
+
+            <div className="mt-3.5 flex items-center justify-center gap-1.5 text-[11px] text-stone-400 dark:text-slate-500">
+              <ShieldCheck size={13} className="text-emerald-500" />
+              <span>100% Encrypted via Razorpay Payment Gateway (PCI-DSS Level 1)</span>
+            </div>
           </div>
         </div>
       )}

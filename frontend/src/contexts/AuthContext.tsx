@@ -11,6 +11,8 @@ interface AuthContextValue {
   loginWithGoogle: (token: string) => Promise<void>;
   loginWithDemo: () => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<User | null>;
+  updateUser: (updatedData: Partial<User>) => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
@@ -24,12 +26,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const refreshUser = async (): Promise<User | null> => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) return null;
+      const latestUser = await authService.me();
+      if (latestUser) {
+        setUser(latestUser);
+        localStorage.setItem(USER_KEY, JSON.stringify(latestUser));
+        return latestUser;
+      }
+      return null;
+    } catch (err) {
+      console.warn("Failed to refresh user profile from server:", err);
+      return null;
+    }
+  };
+
+  const updateUser = (updatedData: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const merged = { ...prev, ...updatedData };
+      localStorage.setItem(USER_KEY, JSON.stringify(merged));
+      return merged;
+    });
+  };
+
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     const storedUser = localStorage.getItem(USER_KEY);
 
     if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse cached user:", e);
+      }
+      // Re-validate against server to verify active subscription expiration status
+      refreshUser();
     }
     setIsLoading(false);
   }, []);
@@ -79,6 +113,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loginWithGoogle,
         loginWithDemo,
         logout,
+        refreshUser,
+        updateUser,
       }}
     >
       {children}

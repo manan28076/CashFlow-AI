@@ -9,16 +9,42 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String?
-  googleId  String?   @unique
-  name      String?
-  avatarUrl String?
-  createdAt DateTime  @default(now())
-  accounts  Account[]
-  budgets   Budget[]
-  monthlyBudgets MonthlyBudget[]
+  id                    String                @id @default(cuid())
+  email                 String                @unique
+  password              String?
+  googleId              String?               @unique
+  name                  String?
+  avatarUrl             String?
+  plan                  String                @default("STARTER") // "STARTER" | "PRO" | "FAMILY"
+  planBillingCycle      String?               // "monthly" | "annual"
+  subscriptionStatus    String                @default("INACTIVE") // "ACTIVE" | "EXPIRED" | "CANCELLED" | "INACTIVE"
+  subscriptionStartedAt DateTime?
+  subscriptionExpiresAt DateTime?
+  createdAt             DateTime              @default(now())
+  accounts              Account[]
+  budgets               Budget[]
+  monthlyBudgets        MonthlyBudget[]
+  payments              SubscriptionPayment[]
+}
+
+model SubscriptionPayment {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan              String   // "PRO" | "FAMILY"
+  billingCycle      String   // "monthly" | "annual"
+  amount            Float    // in INR
+  currency          String   @default("INR")
+  razorpayOrderId   String   @unique
+  razorpayPaymentId String?  @unique
+  razorpaySignature String?
+  status            String   @default("PENDING") // "PENDING" | "SUCCESS" | "FAILED"
+  startedAt         DateTime @default(now())
+  expiresAt         DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
 }
 
 enum TransactionType {
