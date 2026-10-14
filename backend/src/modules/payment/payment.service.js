@@ -2,7 +2,11 @@ const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const prisma = require("../../lib/prisma");
 const AppError = require("../../errors/AppError");
-const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = require("../../config/env");
+const {
+  RAZORPAY_KEY_ID,
+  RAZORPAY_KEY_SECRET,
+  RAZORPAY_WEBHOOK_SECRET,
+} = require("../../config/env");
 
 // Pricing table (in INR & Paise)
 const PLAN_PRICING = {
@@ -273,9 +277,110 @@ const cancelSubscription = async (userId) => {
   return updatedUser;
 };
 
+/**
+ * 5. Server-to-Server Razorpay Webhook Handler
+ */
+const handleWebhookEvent = async ({ rawBody, signature, eventBody }) => {
+  const webhookSecret = RAZORPAY_WEBHOOK_SECRET || RAZORPAY_KEY_SECRET;
+
+  // Cryptographic signature check on incoming webhook
+  if (webhookSecret && signature) {
+    const expectedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(rawBody)
+      .digest("hex");
+
+    if (expectedSignature !== signature) {
+      console.warn("[Razorpay Webhook] Signature mismatch! Rejecting fraudulent payload.");
+      throw new AppError("Invalid Razorpay webhook signature", 400);
+    }
+  }
+
+  const event = eventBody?.event;
+  const payload = eventBody?.payload;
+
+  console.log(`[Razorpay Webhook] Received event: ${event}`);
+
+  if (event === "order.paid" || event === "payment.captured") {
+    const paymentEntity = payload?.payment?.entity;
+    const orderEntity = payload?.order?.entity;
+    const razorpayOrderId = paymentEntity?.order_id || orderEntity?.id;
+    const razorpayPaymentId = paymentEntity?.id;
+
+    if (!razorpayOrderId) {
+      return { status: "ignored_missing_order_id" };
+    }
+
+    const paymentRecord = await prisma.subscriptionPayment.findUnique({
+      where: { razorpayOrderId },
+    });
+
+    if (!paymentRecord) {
+      console.warn(`[Razorpay Webhook] Order ${razorpayOrderId} not found in database.`);
+      return { status: "order_not_found" };
+    }
+
+    // Idempotency: avoid double-processing already successful transactions
+    if (paymentRecord.status === "SUCCESS") {
+      return { status: "already_processed", paymentId: paymentRecord.id };
+    }
+
+    const now = new Date();
+    const isAnnual = paymentRecord.billingCycle === "annual";
+    const durationDays = isAnnual ? 365 : 30;
+    const expiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+
+    // Update payment record to SUCCESS
+    await prisma.subscriptionPayment.update({
+      where: { id: paymentRecord.id },
+      data: {
+        razorpayPaymentId: razorpayPaymentId || paymentRecord.razorpayPaymentId,
+        razorpaySignature: signature || "webhook_verified",
+        status: "SUCCESS",
+        startedAt: now,
+        expiresAt,
+      },
+    });
+
+    // Activate Pro or Family tier on the user in PostgreSQL
+    await prisma.user.update({
+      where: { id: paymentRecord.userId },
+      data: {
+        plan: paymentRecord.plan,
+        planBillingCycle: paymentRecord.billingCycle,
+        subscriptionStatus: "ACTIVE",
+        subscriptionStartedAt: now,
+        subscriptionExpiresAt: expiresAt,
+      },
+    });
+
+    console.log(
+      `[Razorpay Webhook] Activated ${paymentRecord.plan} for user ${paymentRecord.userId} via background webhook`
+    );
+    return {
+      status: "activated",
+      userId: paymentRecord.userId,
+      plan: paymentRecord.plan,
+    };
+  } else if (event === "payment.failed") {
+    const paymentEntity = payload?.payment?.entity;
+    const razorpayOrderId = paymentEntity?.order_id;
+    if (razorpayOrderId) {
+      await prisma.subscriptionPayment.updateMany({
+        where: { razorpayOrderId, status: "PENDING" },
+        data: { status: "FAILED" },
+      });
+    }
+    return { status: "payment_failed_recorded" };
+  }
+
+  return { status: "unhandled_event", event };
+};
+
 module.exports = {
   createOrder,
   verifyPayment,
   getSubscriptionDetails,
   cancelSubscription,
+  handleWebhookEvent,
 };

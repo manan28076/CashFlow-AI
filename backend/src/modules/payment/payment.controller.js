@@ -5,6 +5,7 @@ const {
   verifyPayment,
   getSubscriptionDetails,
   cancelSubscription,
+  handleWebhookEvent,
 } = require("./payment.service");
 
 const createOrderHandler = asyncHandler(async (req, res) => {
@@ -49,9 +50,26 @@ const cancelSubscriptionHandler = asyncHandler(async (req, res) => {
   );
 });
 
+const webhookHandler = asyncHandler(async (req, res) => {
+  const signature = req.headers["x-razorpay-signature"];
+  const rawBody = req.rawBody ? req.rawBody.toString("utf8") : JSON.stringify(req.body);
+
+  const result = await handleWebhookEvent({
+    rawBody,
+    signature,
+    eventBody: req.body,
+  });
+
+  return res.status(200).json({
+    status: "ok",
+    result,
+  });
+});
+
 module.exports = {
   createOrderHandler,
   verifyPaymentHandler,
   getSubscriptionHandler,
   cancelSubscriptionHandler,
+  webhookHandler,
 };
