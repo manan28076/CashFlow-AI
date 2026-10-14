@@ -9,6 +9,7 @@ import { ExpenseByCategoryChart } from "../components/dashboard/ExpenseByCategor
 import { IncomeExpenseChart } from "../components/dashboard/IncomeExpenseChart";
 import { SpendingTrendChart } from "../components/dashboard/SpendingTrendChart";
 import { QuickAddBox } from "../components/dashboard/QuickAddBox";
+import { NotificationCard } from "../components/dashboard/NotificationCard";
 import { Button } from "../components/ui/Button";
 import type { DashboardSummary, CategoryBreakdownResponse, MonthlyTrendItem } from "../types/dashboard";
 import type { Budget } from "../types/budget";
@@ -86,6 +87,9 @@ export const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Proactive AI Intelligence Digest Card */}
+      <NotificationCard />
 
       <SummaryCards summary={summary} isLoading={isLoading} budgetStatus={budgetStatus} />
 

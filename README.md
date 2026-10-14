@@ -296,9 +296,16 @@ npx prisma db seed
 
 Start the backend server:
 ```bash
-npm run dev
-```
 *Backend will run at `http://localhost:5000` with the automated subscription cron daemon initialized.*
+
+> ⚠️ **Render Free Tier & In-Process Cron Notice**:
+> Render's free container tier automatically spins down (sleeps) after 15 minutes of inactivity. When asleep, in-process timers like `node-cron` (`subscriptionCron`, `proactiveCron`) will not fire.
+> **External Trigger Alternative**: To guarantee deterministic execution on free-tier hosting, trigger the protected endpoint using an external runner (e.g. GitHub Actions, cron-job.org):
+> ```bash
+> curl -X POST https://your-app.onrender.com/api/ai/proactive/run \
+>   -H "x-cron-secret: <AI_PROACTIVE_CRON_SECRET>"
+> ```
+
 
 ---
 

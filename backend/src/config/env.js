@@ -17,4 +17,5 @@ module.exports = {
     AI_CALL_TIMEOUT_MS: process.env.AI_CALL_TIMEOUT_MS ? Number(process.env.AI_CALL_TIMEOUT_MS) : 20000,
     AI_PROACTIVE_ENABLED: process.env.AI_PROACTIVE_ENABLED === "true",
     AI_WEEKLY_CRON: process.env.AI_WEEKLY_CRON || "0 9 * * 1",
+    AI_PROACTIVE_CRON_SECRET: process.env.AI_PROACTIVE_CRON_SECRET || process.env.ADMIN_API_KEY || process.env.JWT_SECRET,
 };

@@ -28,6 +28,7 @@ model User {
   aiCallLogs            AiCallLog[]
   merchantRules         MerchantRule[]
   pendingAiActions      PendingAiAction[]
+  notifications         Notification[]
 }
 
 model SubscriptionPayment {
@@ -185,4 +186,20 @@ model PendingAiAction {
 
   @@index([userId, status])
   @@index([expiresAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  dataJson  Json?
+  weekKey   String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, type, weekKey])
+  @@index([userId, readAt])
 }

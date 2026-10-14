@@ -12,6 +12,7 @@ const {
   getMetrics,
   agent,
   confirmAction,
+  triggerProactive,
 } = require("./ai.controller");
 
 const { protect } = require("../../middlewares/auth.middleware");
@@ -23,6 +24,7 @@ router.get("/metrics", protect, getMetrics);
 
 router.post("/agent", protect, aiAgentLimiter, agent);
 router.post("/agent/confirm", protect, confirmAction);
+router.post("/proactive/run", triggerProactive);
 
 router.post("/test", protect, test);
 

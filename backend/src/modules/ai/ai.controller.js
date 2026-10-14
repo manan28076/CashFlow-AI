@@ -192,6 +192,38 @@ const confirmAction = asyncHandler(async (req, res) => {
   );
 });
 
+const triggerProactive = asyncHandler(async (req, res) => {
+  const { runProactiveWeeklySweep } = require("../../jobs/proactiveCron");
+  const { AI_PROACTIVE_CRON_SECRET, JWT_SECRET } = require("../../config/env");
+  const jwt = require("jsonwebtoken");
+
+  const cronSecret = req.headers["x-cron-secret"] || req.headers["x-admin-key"];
+  let isAuthorized = false;
+
+  if (cronSecret && cronSecret === AI_PROACTIVE_CRON_SECRET) {
+    isAuthorized = true;
+  } else if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+    try {
+      const token = req.headers.authorization.split(" ")[1];
+      const decoded = jwt.verify(token, JWT_SECRET);
+      if (decoded && decoded.id) {
+        isAuthorized = true;
+      }
+    } catch {
+      isAuthorized = false;
+    }
+  }
+
+  if (!isAuthorized) {
+    throw new AppError("Unauthorized: Invalid cron secret or authentication token", 401);
+  }
+
+  const result = await runProactiveWeeklySweep();
+  return res.status(200).json(
+    new ApiResponse(200, "Proactive weekly sweep completed successfully", result)
+  );
+});
+
 module.exports = {
   test,
   uploadStatement,
@@ -202,4 +234,5 @@ module.exports = {
   getMetrics,
   agent,
   confirmAction,
+  triggerProactive,
 };

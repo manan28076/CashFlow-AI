@@ -283,3 +283,31 @@ Verified directly from `backend/node_modules/@google/genai` source (`dist/index.
 - **Verification**:
   - `backend/tests/ai.evalScoring.test.js`: 17 unit tests verifying scoring normalization, multiset comparison, categorization, anomaly matching, agent trajectory scoring, and delta calculation. All 17 passed.
   - Total test suite: 95 passing tests, 0 failing across 29 suites. `npx prisma validate` passed.
+---
+
+## Phase 6: Proactive Weekly Agent & Notifications Summary
+- **Database Schema**:
+  - Added model `Notification` (`id`, `userId`, `type`, `title`, `body`, `dataJson`, `weekKey`, `readAt`, `createdAt`) with unique constraint `@@unique([userId, type, weekKey])` ensuring strict idempotency per week.
+  - Added index on `[userId, readAt]` and cascade delete on user deletion.
+  - Created migration `backend/prisma/migrations/20261014_add_notification/migration.sql`.
+  - Pushed to Supabase Postgres via `npx prisma db push`.
+- **Deterministic Proactive Intelligence (`proactive.agent.js`)**:
+  - `computeBudgetBurnRate`: pure deterministic calculation comparing spending velocity against days elapsed in the month. Assigns `ON_TRACK`, `AT_RISK` (burn-rate > time elapsed + 15%), or `OVER_BUDGET`.
+  - `computeWeekOverWeek`: pure calculation comparing the last 7 days of spending against the preceding 7 days per category.
+  - `detectAnomalies`: checks for statistical spikes and duplicates in recent activity.
+  - `generateUserWeeklyDigest`: skips inactive users (0 transactions). Feeds precomputed deterministic facts to `callGemini` (`proactive_agent`) with structured Zod schema (`{ title, summary, keyHighlight }`). The LLM never computes numbers.
+  - Upserts into `Notification` idempotently using `[userId, type, weekKey]`.
+- **Automated Cron Daemon (`src/jobs/proactiveCron.js`)**:
+  - Schedules weekly execution via `node-cron` using `AI_WEEKLY_CRON` (default `"0 9 * * 1"`), active when `AI_PROACTIVE_ENABLED=true`.
+  - Concurrency cap of 5 users per batch. Failures for one user do not abort the sweep.
+  - Documented Render free-tier sleep behavior in `README.md` and provided external trigger documentation.
+- **REST API Endpoints**:
+  - `GET /api/notifications`: paginated with unread filter and total counts.
+  - `PATCH /api/notifications/:id/read`: marks a notification read; validates user ownership.
+  - `POST /api/ai/proactive/run`: protected manual trigger endpoint supporting `x-cron-secret` / `x-admin-key` or JWT auth for external schedulers (e.g. GitHub Actions / cron-job.org).
+- **Frontend Dashboard Integration**:
+  - Created `frontend/src/components/dashboard/NotificationCard.tsx` and service `frontend/src/services/notification.service.ts`.
+  - Displays proactive weekly AI briefings with unread badges, key highlights, and inline "Mark as Read" actions directly on the dashboard.
+- **Verification**:
+  - `backend/tests/ai.proactive.test.js`: 7 tests verifying hand-computed burn-rate math (on track, at risk, over budget), week-over-week deltas, week key determinism, database idempotency, and cross-user isolation.
+  - Total test suite: 102 passing tests, 0 failing across 33 suites. `npx prisma validate` passed.

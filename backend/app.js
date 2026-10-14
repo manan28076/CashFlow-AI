@@ -12,6 +12,7 @@ const compression = require("compression");
 const authRoutes = require("./src/modules/auth/auth.routes");
 const importRoutes = require("./src/modules/import/import.routes");
 const paymentRoutes = require("./src/modules/payment/payment.routes");
+const notificationRoutes = require("./src/modules/notification/notification.routes");
 const app = express();
 
 app.use(cors());
@@ -35,6 +36,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/import", importRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.get("/", (req, res) => {
   res.json({
     success: true,
